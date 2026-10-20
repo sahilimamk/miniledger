@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+web-build/
+
+# Expo
+.expo/
+.expo-shared/
+
+# Environment & secrets
+.env
+*.env.local
+
+# Uploaded receipt files (keep the directory via .gitkeep)
+server/uploads/*
+!server/uploads/.gitkeep
+
+# OS files
+.DS_Store
+*.log
+
+# Scratch / debugging scripts
+shots/
