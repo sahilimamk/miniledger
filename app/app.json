@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.miniledger.app"
+    },
+    "ios": {
+      "bundleIdentifier": "com.miniledger.app",
+      "supportsTablet": true
+    },
+    "name": "MiniLedger",
+    "newArchEnabled": true,
+    "orientation": "portrait",
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "MiniLedger uses your photo library so you can attach a receipt photo to a loan."
+        }
+      ],
+      "expo-font"
+    ],
+    "scheme": "miniledger",
+    "slug": "miniledger",
+    "userInterfaceStyle": "automatic",
+    "version": "1.0.0",
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}
