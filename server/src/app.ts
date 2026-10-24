@@ -21,6 +21,8 @@ export function createApp() {
       },
     }),
   );
+  // Public health check — used by Render and docker-compose healthcheck.
+  app.get('/health', (_req, res) => res.json({ ok: true }));
   app.use('/auth', authRouter);
   app.use('/loans', loansRouter);
   app.use('/summary', summaryRouter);

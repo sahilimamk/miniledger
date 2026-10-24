@@ -18,7 +18,7 @@ services:
     rootDir: server
     buildCommand: npm ci && npm run build
     startCommand: node dist/index.js
-    healthCheckPath: /summary
+    healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
@@ -28,5 +28,3 @@ services:
         fromDatabase:
           name: miniledger-db
           property: connectionString
-      - key: PORT
-        value: 4000
