@@ -4,6 +4,7 @@ node_modules/
 # Build output
 dist/
 web-build/
+app/dist/
 
 # Expo
 .expo/
