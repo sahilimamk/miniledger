@@ -1,10 +1,8 @@
 // Base URL of the MiniLedger API server.
 //
-// The default works when the app runs on this machine (simulator / web).
-// On a physical device, "localhost" is the phone itself — replace this with
-// the development machine's LAN IP, e.g. "http://192.168.1.10:4000".
-//
-// For a deployed build, set EXPO_PUBLIC_API_URL at build time:
-//   EXPO_PUBLIC_API_URL=https://miniledger-api.onrender.com npx expo export --platform web
+// Defaults to the live Render deployment. Override with EXPO_PUBLIC_API_URL
+// at build time for a different environment, or swap to a LAN IP when
+// running against a local server on a physical device:
+//   e.g. "http://192.168.1.10:4000"
 export const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:4000';
+  process.env.EXPO_PUBLIC_API_URL ?? 'https://miniledger-api-imhs.onrender.com';

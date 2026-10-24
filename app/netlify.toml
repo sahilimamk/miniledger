@@ -1,6 +1,7 @@
-# Deploy the Expo web app to Netlify:
-#   1. Set EXPO_PUBLIC_API_URL in Netlify env vars to your deployed API URL
-#   2. Push to your repo — Netlify builds and deploys automatically
+# Deploy the Expo web app to Netlify.
+# The API URL is baked into app/src/config.ts (points to the live Render backend).
+# Override by setting EXPO_PUBLIC_API_URL in Netlify's environment variables
+# if you ever switch backends.
 
 [build]
   command = "npx expo export --platform web"
