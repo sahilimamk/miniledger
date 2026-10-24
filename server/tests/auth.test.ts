@@ -17,12 +17,13 @@ beforeEach(resetDb);
 afterAll(closeDb);
 
 describe('POST /auth/request-otp', () => {
-  it('returns 200 { ok: true } for a valid phone', async () => {
+  it('returns 200 { ok: true, code } for a valid phone', async () => {
     const res = await request(app)
       .post('/auth/request-otp')
       .send({ phone: PHONE });
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ ok: true });
+    expect(res.body.ok).toBe(true);
+    expect(res.body.code).toMatch(/^\d{6}$/);
     expect(peekOtp(PHONE)).toMatch(/^\d{6}$/);
   });
 

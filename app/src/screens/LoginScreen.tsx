@@ -37,9 +37,9 @@ export function LoginScreen({ navigation }: Props) {
     setSending(true);
     try {
       const normalized = normalizePhone(phone);
-      await requestOtp(normalized);
+      const code = await requestOtp(normalized);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
-      navigation.navigate('Otp', { phone: normalized });
+      navigation.navigate('Otp', { phone: normalized, code });
     } catch (err) {
       toast.show({
         variant: 'error',
@@ -58,7 +58,8 @@ export function LoginScreen({ navigation }: Props) {
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={[styles.scroll, isWide && styles.scrollWide]}
       >
-        <View style={isWide ? styles.wideCol : undefined}>
+        <View style={[styles.inner, isWide && styles.innerWide]}>
+          {/* Hero */}
           <Entrance delay={0}>
             <View style={styles.heroIconWrap}>
               <View style={[styles.heroRing, { borderColor: colors.tint }]}>
@@ -74,16 +75,17 @@ export function LoginScreen({ navigation }: Props) {
             </View>
           </Entrance>
 
+          {/* Title */}
           <Entrance delay={120}>
             <Text style={[typography.largeTitle2, styles.appName, { color: colors.label }]}>
               MiniLedger
             </Text>
-            <Text style={[typography.subhead, styles.tagline, { color: colors.secondaryLabel }]}>
-              Track what you're owed
+            <Text style={[typography.body, styles.tagline, { color: colors.secondaryLabel }]}>
+              Track what you've lent — see who owes you and what's overdue.
             </Text>
           </Entrance>
 
-
+          {/* Phone field */}
           <Entrance delay={240}>
             <GlassFieldCard>
               <View style={styles.fieldRow}>
@@ -94,7 +96,7 @@ export function LoginScreen({ navigation }: Props) {
                     setPhone(text);
                     if (phoneError) setPhoneError(null);
                   }}
-                  accessibilityLabel="Phone"
+                  accessibilityLabel="Phone number"
                   placeholder="+91 98765 43210"
                   placeholderTextColor={colors.tertiaryLabel}
                   keyboardType="phone-pad"
@@ -116,10 +118,11 @@ export function LoginScreen({ navigation }: Props) {
               ) : null}
             </GlassFieldCard>
             <Text style={[typography.footnote, styles.note, { color: colors.secondaryLabel }]}>
-              We'll send a 6-digit sign-in code to this number.
+              Enter any phone number — a demo code will appear on the next screen.
             </Text>
           </Entrance>
 
+          {/* Button */}
           <Entrance delay={360}>
             <View style={styles.buttonWrap}>
               <PrimaryButton
@@ -138,56 +141,60 @@ export function LoginScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   scroll: {
+    flexGrow: 1,
     paddingHorizontal: sectionInset,
-    paddingTop: 56,
-    paddingBottom: spacing.xxl,
+    paddingVertical: spacing.xxl,
   },
   scrollWide: {
-    flexGrow: 1,
     justifyContent: 'center',
-    paddingTop: 0,
   },
-  wideCol: {
+  inner: {
     width: '100%',
-    maxWidth: 420,
+    maxWidth: 440,
     alignSelf: 'center',
+    gap: spacing.sm,
+  },
+  innerWide: {
+    // Already constrained by maxWidth
   },
   heroIconWrap: {
     alignItems: 'center',
+    marginBottom: spacing.lg,
   },
   heroRing: {
-    width: 92,
-    height: 92,
-    borderRadius: 46,
-    borderWidth: 1,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
   },
   heroIcon: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     alignItems: 'center',
     justifyContent: 'center',
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.3,
     shadowRadius: 24,
     elevation: 12,
   },
   appName: {
     textAlign: 'center',
-    marginTop: spacing.lg,
+    marginBottom: spacing.sm,
   },
   tagline: {
     textAlign: 'center',
-    marginTop: spacing.xs,
     marginBottom: spacing.xl,
+    paddingHorizontal: spacing.md,
+    lineHeight: 22,
   },
   fieldRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    minHeight: 44,
+    minHeight: 48,
   },
   input: {
     flex: 1,
@@ -203,6 +210,6 @@ const styles = StyleSheet.create({
     marginLeft: spacing.sm,
   },
   buttonWrap: {
-    marginTop: spacing.xl,
+    marginTop: spacing.lg,
   },
 });

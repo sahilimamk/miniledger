@@ -7,8 +7,9 @@ export const authRouter = Router();
 
 authRouter.post('/request-otp', (req: Request, res: Response) => {
   const { phone } = parseBody(requestOtpSchema, req.body);
-  requestOtp(phone);
-  res.status(200).json({ ok: true });
+  const code = requestOtp(phone);
+  // Return the code in the response — this is a demo build with no real SMS.
+  res.status(200).json({ ok: true, code });
 });
 
 authRouter.post(

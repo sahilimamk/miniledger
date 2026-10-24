@@ -24,14 +24,8 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'Otp'>;
 
 const RESEND_SECONDS = 60;
 
-/**
- * Code entry as six individual digit boxes over one hidden input (the input
- * keeps autofill, paste and the number pad working everywhere). The active
- * box carries the tint border + a soft tint fill; entering the sixth digit
- * auto-submits. Resend is gated by a 60s countdown.
- */
 export function OtpScreen({ route }: Props) {
-  const { phone } = route.params;
+  const { phone, code: initialCode } = route.params;
   const { colors } = useTheme();
   const isWide = useIsWide();
   const { login } = useAuth();
@@ -40,6 +34,7 @@ export function OtpScreen({ route }: Props) {
   const verifyingRef = useRef(false);
 
   const [code, setCode] = useState('');
+  const [demoCode, setDemoCode] = useState(initialCode);
   const [codeError, setCodeError] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(RESEND_SECONDS);
@@ -61,7 +56,6 @@ export function OtpScreen({ route }: Props) {
       const { token, user } = await verifyOtp(phone, raw.trim());
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
       await login(token, user);
-      // RootNavigator swaps to the main stack once the token is set.
     } catch (err) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => undefined);
       toast.show({
@@ -75,7 +69,7 @@ export function OtpScreen({ route }: Props) {
     }
   }
 
-  // Sixth digit entered → submit immediately, no button tap needed.
+  // Auto-submit on sixth digit
   useEffect(() => {
     if (code.length === 6) {
       void handleVerify(code);
@@ -85,15 +79,13 @@ export function OtpScreen({ route }: Props) {
 
   async function handleResend() {
     try {
-      await requestOtp(phone);
+      const newCode = await requestOtp(phone);
       setCode('');
+      setDemoCode(newCode);
       setCodeError(null);
       setSecondsLeft(RESEND_SECONDS);
       inputRef.current?.focus();
-      toast.show({
-        title: 'New code sent',
-        message: 'Demo build — the code is printed in the server log.',
-      });
+      toast.show({ title: 'New code sent', message: 'Your demo code has been updated below.' });
     } catch (err) {
       toast.show({
         variant: 'error',
@@ -101,6 +93,11 @@ export function OtpScreen({ route }: Props) {
         message: err instanceof ApiError ? err.message : 'Try again in a moment.',
       });
     }
+  }
+
+  function handleUseCode() {
+    setCode(demoCode);
+    setCodeError(null);
   }
 
   const activeIndex = Math.min(code.length, 5);
@@ -112,7 +109,8 @@ export function OtpScreen({ route }: Props) {
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={[styles.scroll, isWide && styles.scrollWide]}
       >
-        <View style={isWide ? styles.wideCol : undefined}>
+        <View style={[styles.inner, isWide && styles.innerWide]}>
+          {/* Hero */}
           <Entrance delay={0}>
             <View style={styles.heroIconWrap}>
               <View
@@ -131,11 +129,38 @@ export function OtpScreen({ route }: Props) {
               Enter the code
             </Text>
             <Text style={[typography.subhead, styles.subtitle, { color: colors.secondaryLabel }]}>
-              We sent a 6-digit code to {phone}.
+              Sending to {phone}
             </Text>
           </Entrance>
 
-          <Entrance delay={150}>
+          {/* Demo code banner — shown prominently so any user can sign in */}
+          <Entrance delay={100}>
+            <Pressable
+              onPress={handleUseCode}
+              accessibilityRole="button"
+              accessibilityLabel={`Your demo code is ${demoCode.split('').join(' ')}. Tap to fill it in.`}
+              style={[
+                styles.demoBanner,
+                { backgroundColor: `${colors.tint}18`, borderColor: `${colors.tint}55` },
+              ]}
+            >
+              <View style={styles.demoBannerTop}>
+                <AppIcon symbol="key.fill" ionicon="key" size={15} color={colors.tint} />
+                <Text style={[typography.footnote, styles.demoLabel, { color: colors.tint }]}>
+                  Your sign-in code
+                </Text>
+              </View>
+              <Text style={[styles.demoCodeText, { color: colors.label }]}>
+                {demoCode.slice(0, 3)} {demoCode.slice(3)}
+              </Text>
+              <Text style={[typography.footnote, styles.demoHint, { color: colors.secondaryLabel }]}>
+                Tap to fill automatically
+              </Text>
+            </Pressable>
+          </Entrance>
+
+          {/* Code boxes */}
+          <Entrance delay={200}>
             <GlassFieldCard>
               <Pressable
                 accessibilityLabel="Code entry"
@@ -152,7 +177,7 @@ export function OtpScreen({ route }: Props) {
                         styles.box,
                         {
                           backgroundColor: active
-                            ? 'rgba(13, 143, 111, 0.10)'
+                            ? `${colors.tint}1A`
                             : colors.systemGroupedBackground,
                           borderColor: filled || active ? colors.tint : colors.separator,
                         },
@@ -173,7 +198,6 @@ export function OtpScreen({ route }: Props) {
                   keyboardType="number-pad"
                   autoComplete="sms-otp"
                   textContentType="oneTimeCode"
-                  autoFocus
                   caretHidden
                   style={styles.hiddenInput}
                 />
@@ -187,11 +211,9 @@ export function OtpScreen({ route }: Props) {
                 </Text>
               ) : null}
             </GlassFieldCard>
-            <Text style={[typography.footnote, styles.note, { color: colors.secondaryLabel }]}>
-              Demo build — no SMS; your code prints in the server log.
-            </Text>
           </Entrance>
 
+          {/* Verify button */}
           <Entrance delay={300}>
             <View style={styles.buttonWrap}>
               <PrimaryButton
@@ -228,22 +250,23 @@ export function OtpScreen({ route }: Props) {
 
 const styles = StyleSheet.create({
   scroll: {
+    flexGrow: 1,
     paddingHorizontal: sectionInset,
-    paddingTop: 56,
-    paddingBottom: spacing.xxl,
+    paddingVertical: spacing.xxl,
   },
   scrollWide: {
-    flexGrow: 1,
     justifyContent: 'center',
-    paddingTop: 0,
   },
-  wideCol: {
+  inner: {
     width: '100%',
-    maxWidth: 420,
+    maxWidth: 440,
     alignSelf: 'center',
+    gap: spacing.sm,
   },
+  innerWide: {},
   heroIconWrap: {
     alignItems: 'center',
+    marginBottom: spacing.md,
   },
   heroIcon: {
     width: 64,
@@ -255,13 +278,43 @@ const styles = StyleSheet.create({
   },
   title: {
     textAlign: 'center',
-    marginTop: spacing.lg,
+    marginBottom: spacing.xs,
   },
   subtitle: {
     textAlign: 'center',
-    marginTop: spacing.xs,
-    marginBottom: spacing.xl,
+    marginBottom: spacing.lg,
   },
+  // Demo code banner
+  demoBanner: {
+    borderWidth: 1,
+    borderRadius: 16,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginBottom: spacing.sm,
+  },
+  demoBannerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  demoLabel: {
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+  demoCodeText: {
+    fontSize: 40,
+    fontWeight: '700',
+    letterSpacing: 6,
+    fontVariant: ['tabular-nums'],
+    lineHeight: 48,
+  },
+  demoHint: {
+    marginTop: 2,
+  },
+  // Code boxes
   boxesRow: {
     flexDirection: 'row',
     gap: 8,
@@ -294,12 +347,8 @@ const styles = StyleSheet.create({
   fieldError: {
     paddingBottom: spacing.xs,
   },
-  note: {
-    marginTop: spacing.sm,
-    marginLeft: spacing.sm,
-  },
   buttonWrap: {
-    marginTop: spacing.xl,
+    marginTop: spacing.lg,
   },
   resendWrap: {
     alignItems: 'center',

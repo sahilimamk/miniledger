@@ -26,7 +26,7 @@ const MAX_OTP_REQUESTS = 5;
 const OTP_REQUEST_WINDOW_MS = 10 * 60 * 1000;
 const otpRequestLog = new Map<string, number[]>();
 
-export function requestOtp(phone: string): void {
+export function requestOtp(phone: string): string {
   const now = Date.now();
   const recent = (otpRequestLog.get(phone) ?? []).filter(
     (t) => now - t < OTP_REQUEST_WINDOW_MS,
@@ -42,6 +42,7 @@ export function requestOtp(phone: string): void {
   // A fresh request supersedes any previous code and resets its guess count.
   otpStore.set(phone, { code, expiresAt: now + OTP_TTL_MS, attempts: 0 });
   console.log(`[OTP] phone=${phone} code=${code}`);
+  return code;
 }
 
 export interface AuthResult {

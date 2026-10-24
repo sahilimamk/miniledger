@@ -1,6 +1,6 @@
 export type AuthStackParamList = {
   Login: undefined;
-  Otp: { phone: string };
+  Otp: { phone: string; code: string };
 };
 
 export type MainStackParamList = {
