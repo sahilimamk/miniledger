@@ -38,7 +38,7 @@ Log in from the app, then read the OTP from the server console — it looks like
 Other server commands:
 
 ```bash
-npm test                  # 69 tests against miniledger_test
+npm test                  # 73 tests against miniledger_test
 npm run build && npm start  # production-style run from dist/
 ```
 
