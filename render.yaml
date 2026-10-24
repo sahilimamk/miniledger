@@ -1,0 +1,32 @@
+# Render Blueprint — one-click deploy at:
+# https://render.com/deploy?repo=https://github.com/sahilimamk/miniledger
+#
+# Creates a PostgreSQL database + a web service for the API.
+# After deploy, set EXPO_PUBLIC_API_URL to the service URL when building the app.
+
+databases:
+  - name: miniledger-db
+    databaseName: miniledger
+    user: miniledger
+    plan: free
+
+services:
+  - type: web
+    name: miniledger-api
+    runtime: node
+    plan: free
+    rootDir: server
+    buildCommand: npm ci && npm run build
+    startCommand: node dist/index.js
+    healthCheckPath: /summary
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: miniledger-db
+          property: connectionString
+      - key: PORT
+        value: 4000

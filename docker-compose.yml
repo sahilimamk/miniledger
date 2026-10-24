@@ -1,0 +1,38 @@
+# Run the full stack locally with one command:
+#   docker compose up --build
+#
+# The API will be at http://localhost:4000 and PostgreSQL on localhost:5433
+# (mapped to 5433 so it never clashes with a local Postgres on 5432).
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: miniledger
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: ./server
+    ports:
+      - "4000:4000"
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/miniledger
+      JWT_SECRET: ${JWT_SECRET:-dev-only-secret-change-me}
+      NODE_ENV: production
+      PORT: 4000
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
