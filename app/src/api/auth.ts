@@ -1,10 +1,21 @@
 import { api } from './client';
 import type { VerifyOtpResponse } from './types';
 
-/** Asks the server to generate a mock OTP for this phone. Returns the code directly (demo build — no SMS). */
-export async function requestOtp(phone: string): Promise<string> {
-  const res = await api.post<{ ok: true; code: string }>('/auth/request-otp', { phone });
-  return res.code;
+export interface RequestOtpResponse {
+  ok: true;
+  /** Present only when the server runs with DEMO_AUTH=true. */
+  code?: string;
+  /** True when the server is in demo mode (no SMS provider). */
+  demo: boolean;
+}
+
+/**
+ * Asks the server to generate a sign-in code for this phone. The code is
+ * returned ONLY when the server runs in demo mode; otherwise the caller
+ * learns nothing but { demo: false } and must wait for the real channel.
+ */
+export async function requestOtp(phone: string): Promise<RequestOtpResponse> {
+  return api.post<RequestOtpResponse>('/auth/request-otp', { phone });
 }
 
 /** Exchanges phone + code for a session token and the user record. */

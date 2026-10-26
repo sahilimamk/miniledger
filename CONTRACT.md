@@ -13,12 +13,21 @@ Overdue = pending AND due_date < today (server-local date).
 ## Auth (mock OTP)
 
 - `POST /auth/request-otp` body `{ "phone": "+919876543210" }`
-  → `200 { "ok": true }`. Server generates a 6-digit OTP, stores it in an
-  in-memory map with a 5-minute expiry, and prints it to the server log
-  (mock — no SMS). Phone must be 10–15 digits, optional leading `+`.
+  → `200 { "ok": true, "demo": false }` by default. Server generates a
+  6-digit OTP, stores it in an in-memory map with a 5-minute expiry.
+  Phone must be 10–15 digits, optional leading `+`.
+  Demo gate: ONLY when the server runs with `DEMO_AUTH=true` does the
+  response also carry the code (`{ "ok": true, "code": "123456",
+  "demo": true }`) and the server log print it, so the client can show it
+  on screen labelled DEMO. With the flag off the code is never returned,
+  logged, or rendered — a real code channel (SMS provider) is then
+  required to sign in. The current Render deployment sets `DEMO_AUTH=true`
+  (see render.yaml) because no SMS provider is wired yet.
 - `POST /auth/verify-otp` body `{ "phone": "...", "code": "123456" }`
   → `200 { "token": "<jwt>", "user": { "id": "<uuid>", "phone": "..." } }`.
-  User row is created on first verify. Wrong/expired code → `401`.
+  User row is created on first verify. Wrong code → `401 "invalid code"`;
+  expired code → `401 "code expired"`; no code requested → `401
+  "invalid or expired code"`.
 - All routes below require header `Authorization: Bearer <token>`.
   Missing/invalid token → `401 { "error": "unauthorized" }`.
 

@@ -18,6 +18,20 @@ export function normalizePhone(raw: string): string {
   return raw.replace(/[\s-]/g, '');
 }
 
+/**
+ * Masks a phone for display: keeps the country code (when the number is
+ * longer than 10 digits) and the last 4 digits, bullets the rest.
+ * e.g. +919999000111 -> "+91 ••••••0111".
+ */
+export function maskPhone(raw: string): string {
+  const digits = raw.replace(/\D/g, '');
+  if (digits.length <= 4) return raw;
+  const last4 = digits.slice(-4);
+  const national = digits.length > 10 ? digits.slice(-10) : digits;
+  const cc = digits.length > 10 ? `+${digits.slice(0, -10)} ` : '';
+  return `${cc}${'•'.repeat(Math.max(0, national.length - 4))}${last4}`;
+}
+
 /** Contract: exactly 6 digits. */
 export function validateOtpCode(raw: string): string | null {
   const code = raw.trim();

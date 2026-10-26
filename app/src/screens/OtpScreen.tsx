@@ -18,14 +18,14 @@ import { useIsWide } from '../hooks/useIsWide';
 import { sectionInset, spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
 import { useTheme } from '../theme/useTheme';
-import { validateOtpCode } from '../utils/validation';
+import { maskPhone, validateOtpCode } from '../utils/validation';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Otp'>;
 
 const RESEND_SECONDS = 60;
 
-export function OtpScreen({ route }: Props) {
-  const { phone, code: initialCode } = route.params;
+export function OtpScreen({ route, navigation }: Props) {
+  const { phone, code: initialCode, demo } = route.params;
   const { colors } = useTheme();
   const isWide = useIsWide();
   const { login } = useAuth();
@@ -34,9 +34,10 @@ export function OtpScreen({ route }: Props) {
   const verifyingRef = useRef(false);
 
   const [code, setCode] = useState('');
-  const [demoCode, setDemoCode] = useState(initialCode);
+  const [demoCode, setDemoCode] = useState<string | undefined>(initialCode);
   const [codeError, setCodeError] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
+  const [resending, setResending] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(RESEND_SECONDS);
 
   useEffect(() => {
@@ -58,11 +59,19 @@ export function OtpScreen({ route }: Props) {
       await login(token, user);
     } catch (err) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => undefined);
-      toast.show({
-        variant: 'error',
-        title: 'Sign-in failed',
-        message: err instanceof ApiError ? err.message : 'Something went wrong. Try again.',
-      });
+      // Field-specific failures get an inline message (and the boxes stay
+      // editable); anything else is a toast, as before.
+      if (err instanceof ApiError && err.message === 'code expired') {
+        setCodeError('This code has expired. Request a new one below.');
+      } else if (err instanceof ApiError && err.message === 'invalid code') {
+        setCodeError('That code doesn’t match. Check the digits and try again.');
+      } else {
+        toast.show({
+          variant: 'error',
+          title: 'Sign-in failed',
+          message: err instanceof ApiError ? err.message : 'Something went wrong. Try again.',
+        });
+      }
     } finally {
       verifyingRef.current = false;
       setVerifying(false);
@@ -78,24 +87,33 @@ export function OtpScreen({ route }: Props) {
   }, [code]);
 
   async function handleResend() {
+    if (resending) return;
+    setResending(true);
     try {
-      const newCode = await requestOtp(phone);
+      const res = await requestOtp(phone);
       setCode('');
-      setDemoCode(newCode);
+      setDemoCode(res.code);
       setCodeError(null);
       setSecondsLeft(RESEND_SECONDS);
       inputRef.current?.focus();
-      toast.show({ title: 'New code sent', message: 'Your demo code has been updated below.' });
+      toast.show(
+        res.demo && res.code
+          ? { title: 'New code sent', message: 'Your demo code has been updated below.' }
+          : { title: 'New code requested', message: 'Enter the new code when it arrives.' },
+      );
     } catch (err) {
       toast.show({
         variant: 'error',
         title: 'Could not resend',
         message: err instanceof ApiError ? err.message : 'Try again in a moment.',
       });
+    } finally {
+      setResending(false);
     }
   }
 
   function handleUseCode() {
+    if (!demoCode) return;
     setCode(demoCode);
     setCodeError(null);
   }
@@ -129,35 +147,50 @@ export function OtpScreen({ route }: Props) {
               Enter the code
             </Text>
             <Text style={[typography.subhead, styles.subtitle, { color: colors.secondaryLabel }]}>
-              Sending to {phone}
+              Code for {maskPhone(phone)}
             </Text>
-          </Entrance>
-
-          {/* Demo code banner — shown prominently so any user can sign in */}
-          <Entrance delay={100}>
             <Pressable
-              onPress={handleUseCode}
               accessibilityRole="button"
-              accessibilityLabel={`Your demo code is ${demoCode.split('').join(' ')}. Tap to fill it in.`}
-              style={[
-                styles.demoBanner,
-                { backgroundColor: `${colors.tint}18`, borderColor: `${colors.tint}55` },
-              ]}
+              accessibilityLabel="Use a different phone number"
+              hitSlop={8}
+              onPress={() => navigation.goBack()}
+              style={styles.editNumberWrap}
             >
-              <View style={styles.demoBannerTop}>
-                <AppIcon symbol="key.fill" ionicon="key" size={15} color={colors.tint} />
-                <Text style={[typography.footnote, styles.demoLabel, { color: colors.tint }]}>
-                  Your sign-in code
-                </Text>
-              </View>
-              <Text style={[styles.demoCodeText, { color: colors.label }]}>
-                {demoCode.slice(0, 3)} {demoCode.slice(3)}
-              </Text>
-              <Text style={[typography.footnote, styles.demoHint, { color: colors.secondaryLabel }]}>
-                Tap to fill automatically
+              <Text style={[typography.subhead, styles.editNumberText, { color: colors.tint }]}>
+                Use a different number
               </Text>
             </Pressable>
           </Entrance>
+
+          {/* Demo code banner — ONLY when the server runs in demo mode.
+              In production auth this block renders nothing: the code is
+              never in the response, so there is nothing to show. */}
+          {demo && demoCode ? (
+            <Entrance delay={100}>
+              <Pressable
+                onPress={handleUseCode}
+                accessibilityRole="button"
+                accessibilityLabel={`Your demo code is ${demoCode.split('').join(' ')}. Tap to fill it in.`}
+                style={[
+                  styles.demoBanner,
+                  { backgroundColor: `${colors.tint}18`, borderColor: `${colors.tint}55` },
+                ]}
+              >
+                <View style={styles.demoBannerTop}>
+                  <AppIcon symbol="key.fill" ionicon="key" size={15} color={colors.tint} />
+                  <Text style={[typography.footnote, styles.demoLabel, { color: colors.tint }]}>
+                    Demo sign-in code
+                  </Text>
+                </View>
+                <Text style={[styles.demoCodeText, { color: colors.label }]}>
+                  {demoCode.slice(0, 3)} {demoCode.slice(3)}
+                </Text>
+                <Text style={[typography.footnote, styles.demoHint, { color: colors.secondaryLabel }]}>
+                  Demo mode — shown for testing only. Tap to fill automatically.
+                </Text>
+              </Pressable>
+            </Entrance>
+          ) : null}
 
           {/* Code boxes */}
           <Entrance delay={200}>
@@ -173,6 +206,7 @@ export function OtpScreen({ route }: Props) {
                   return (
                     <View
                       key={i}
+                      accessibilityLabel={`Digit ${i + 1}${filled ? `, ${code[i]}` : ', empty'}`}
                       style={[
                         styles.box,
                         {
@@ -223,8 +257,20 @@ export function OtpScreen({ route }: Props) {
                 accessibilityLabel="Verify code and sign in"
               />
             </View>
+            {verifying ? (
+              <Text
+                accessibilityLiveRegion="polite"
+                style={[typography.subhead, styles.statusText, { color: colors.secondaryLabel }]}
+              >
+                Verifying code…
+              </Text>
+            ) : null}
             <View style={styles.resendWrap}>
-              {secondsLeft > 0 ? (
+              {resending ? (
+                <Text style={[typography.subhead, { color: colors.tertiaryLabel }]}>
+                  Sending…
+                </Text>
+              ) : secondsLeft > 0 ? (
                 <Text style={[typography.subhead, { color: colors.tertiaryLabel }]}>
                   Resend in {secondsLeft}s
                 </Text>
@@ -282,7 +328,16 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     textAlign: 'center',
+    marginBottom: spacing.xs,
+  },
+  editNumberWrap: {
+    alignItems: 'center',
     marginBottom: spacing.lg,
+    minHeight: 32,
+    justifyContent: 'center',
+  },
+  editNumberText: {
+    fontWeight: '600',
   },
   // Demo code banner
   demoBanner: {
@@ -349,6 +404,10 @@ const styles = StyleSheet.create({
   },
   buttonWrap: {
     marginTop: spacing.lg,
+  },
+  statusText: {
+    textAlign: 'center',
+    marginTop: spacing.sm,
   },
   resendWrap: {
     alignItems: 'center',

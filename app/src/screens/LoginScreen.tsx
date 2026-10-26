@@ -37,9 +37,9 @@ export function LoginScreen({ navigation }: Props) {
     setSending(true);
     try {
       const normalized = normalizePhone(phone);
-      const code = await requestOtp(normalized);
+      const res = await requestOtp(normalized);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
-      navigation.navigate('Otp', { phone: normalized, code });
+      navigation.navigate('Otp', { phone: normalized, code: res.code, demo: res.demo });
     } catch (err) {
       toast.show({
         variant: 'error',
@@ -118,7 +118,7 @@ export function LoginScreen({ navigation }: Props) {
               ) : null}
             </GlassFieldCard>
             <Text style={[typography.footnote, styles.note, { color: colors.secondaryLabel }]}>
-              Enter any phone number — a demo code will appear on the next screen.
+              You&apos;ll enter a 6-digit code on the next screen.
             </Text>
           </Entrance>
 

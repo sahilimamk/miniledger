@@ -31,3 +31,15 @@ export const env = {
   jwtSecret: process.env.JWT_SECRET ?? DEFAULT_JWT_SECRET,
   nodeEnv: process.env.NODE_ENV ?? 'development',
 };
+
+/**
+ * Demo auth gate. When true, /request-otp returns the code in the response
+ * and the server logs it, so the client can show it on screen — the current
+ * deployment has no SMS provider, so this is the only sign-in path there.
+ * When false (the default), the code is NEVER returned, logged, or rendered:
+ * the client only learns a code was requested. Read per call so tests and
+ * process restarts pick up changes without a rebuild.
+ */
+export function isDemoAuth(): boolean {
+  return process.env.DEMO_AUTH === 'true';
+}

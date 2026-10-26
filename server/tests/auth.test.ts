@@ -17,14 +17,29 @@ beforeEach(resetDb);
 afterAll(closeDb);
 
 describe('POST /auth/request-otp', () => {
-  it('returns 200 { ok: true, code } for a valid phone', async () => {
+  it('returns 200 { ok: true, demo: false } and NO code when demo is off (default)', async () => {
     const res = await request(app)
       .post('/auth/request-otp')
       .send({ phone: PHONE });
     expect(res.status).toBe(200);
     expect(res.body.ok).toBe(true);
-    expect(res.body.code).toMatch(/^\d{6}$/);
+    expect(res.body.demo).toBe(false);
+    expect(res.body.code).toBeUndefined();
     expect(peekOtp(PHONE)).toMatch(/^\d{6}$/);
+  });
+
+  it('returns the code only when DEMO_AUTH=true', async () => {
+    process.env.DEMO_AUTH = 'true';
+    try {
+      const res = await request(app)
+        .post('/auth/request-otp')
+        .send({ phone: PHONE });
+      expect(res.status).toBe(200);
+      expect(res.body.demo).toBe(true);
+      expect(res.body.code).toMatch(/^\d{6}$/);
+    } finally {
+      delete process.env.DEMO_AUTH;
+    }
   });
 
   it('accepts a bare 10-digit phone without +', async () => {
@@ -75,14 +90,14 @@ describe('POST /auth/verify-otp', () => {
     expect(second.body.user.id).toBe(first.body.user.id);
   });
 
-  it('wrong code -> 401', async () => {
+  it('wrong code -> 401 invalid code', async () => {
     await request(app).post('/auth/request-otp').send({ phone: PHONE });
     // '000000' can never be issued: codes are generated in [100000, 999999].
     const res = await request(app)
       .post('/auth/verify-otp')
       .send({ phone: PHONE, code: '000000' });
     expect(res.status).toBe(401);
-    expect(res.body.error).toBeTruthy();
+    expect(res.body.error).toBe('invalid code');
   });
 
   it('no OTP requested -> 401', async () => {

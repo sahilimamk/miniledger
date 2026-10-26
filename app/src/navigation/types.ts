@@ -1,6 +1,7 @@
 export type AuthStackParamList = {
   Login: undefined;
-  Otp: { phone: string; code: string };
+  /** `code` is present only when the server runs in demo mode. */
+  Otp: { phone: string; code?: string; demo: boolean };
 };
 
 export type MainStackParamList = {
