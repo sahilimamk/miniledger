@@ -1,4 +1,4 @@
-import { API_BASE_URL } from '../config';
+import { API_BASE_URL, API_CONFIGURATION_ERROR } from '../config';
 
 /** Error thrown for any non-2xx API response; message comes from the server's `{ error }` body when present. */
 export class ApiError extends Error {
@@ -37,6 +37,10 @@ interface RequestOptions {
 }
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  if (API_CONFIGURATION_ERROR) {
+    throw new ApiError(0, API_CONFIGURATION_ERROR);
+  }
+
   const headers: Record<string, string> = {};
   if (authToken) {
     headers.Authorization = `Bearer ${authToken}`;

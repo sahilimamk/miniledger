@@ -48,13 +48,13 @@ npm run build && npm start  # production-style run from dist/
 ```bash
 cd app
 npm install
-npx expo start            # scan the QR code with Expo Go, or press i / a / w
+EXPO_PUBLIC_API_URL=http://localhost:4000 npx expo start  # scan the QR code, or press i / a / w
 ```
 
-The app talks to `http://localhost:4000` by default. On a **physical phone**,
-localhost is the phone itself — set your computer's LAN IP in
-`app/src/config.ts` first (e.g. `http://192.168.1.10:4000`) and keep the phone
-on the same Wi-Fi.
+The app defaults to the deployed API unless you set `EXPO_PUBLIC_API_URL`. On a
+**physical phone**, localhost is the phone itself — use your computer's LAN IP
+(e.g. `EXPO_PUBLIC_API_URL=http://192.168.1.10:4000`) and keep the phone on the
+same Wi-Fi.
 
 Typecheck: `npx tsc --noEmit`
 
@@ -93,6 +93,12 @@ EXPO_PUBLIC_API_URL=https://your-api-url.onrender.com npx expo export --platform
 Deploy the `dist/` folder to Netlify (a `netlify.toml` is included), Vercel, or
 any static host. Set `EXPO_PUBLIC_API_URL` as an environment variable in the
 hosting dashboard so it's baked in at build time.
+
+Netlify Deploy Previews are isolated from production. Set
+`EXPO_PUBLIC_PREVIEW_API_URL` in Netlify to a separate API with `DEMO_AUTH=true`;
+the preview build will not fall back to the production API. Until that variable
+is configured, the preview shows an actionable setup error when someone tries
+to request a sign-in code.
 
 ## Notes
 

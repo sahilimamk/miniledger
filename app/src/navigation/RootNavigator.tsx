@@ -64,11 +64,11 @@ export function RootNavigator() {
           />
         </MainStack.Navigator>
       ) : (
-        <AuthStack.Navigator screenOptions={headerOptions}>
+        <AuthStack.Navigator screenOptions={{ ...headerOptions, headerShown: false }}>
           <AuthStack.Screen
             name="Login"
             component={LoginScreen}
-            options={{ title: 'MiniLedger', headerLargeTitle: true }}
+            options={{ title: 'MiniLedger' }}
           />
           <AuthStack.Screen
             name="Otp"

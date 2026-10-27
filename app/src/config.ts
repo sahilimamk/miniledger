@@ -1,8 +1,14 @@
-// Base URL of the MiniLedger API server.
-//
-// Defaults to the live Render deployment. Override with EXPO_PUBLIC_API_URL
-// at build time for a different environment, or swap to a LAN IP when
-// running against a local server on a physical device:
-//   e.g. "http://192.168.1.10:4000"
-export const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL ?? 'https://miniledger-api-imhs.onrender.com';
+// Deploy previews must use a separate demo API. Never silently point a preview
+// at production: the code display is gated by the server, and preview builds
+// should not create test OTPs or accounts in the real ledger.
+const isDeployPreview = process.env.EXPO_PUBLIC_BUILD_CONTEXT === 'deploy-preview';
+const previewApiUrl = process.env.EXPO_PUBLIC_PREVIEW_API_URL;
+
+export const API_CONFIGURATION_ERROR =
+  isDeployPreview && !previewApiUrl
+    ? 'The preview API is not configured. Set EXPO_PUBLIC_PREVIEW_API_URL to the isolated demo API.'
+    : null;
+
+export const API_BASE_URL = isDeployPreview
+  ? (previewApiUrl ?? '')
+  : (process.env.EXPO_PUBLIC_API_URL ?? 'https://miniledger-api-imhs.onrender.com');

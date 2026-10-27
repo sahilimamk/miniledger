@@ -3,6 +3,12 @@
   command = "npx expo export --platform web"
   publish = "dist"
 
+# A deploy preview must be explicitly connected to an isolated demo API. The
+# app fails closed when EXPO_PUBLIC_PREVIEW_API_URL is missing; it never falls
+# back to the production API for preview builds.
+[context.deploy-preview.environment]
+  EXPO_PUBLIC_BUILD_CONTEXT = "deploy-preview"
+
 # SPA fallback — React Navigation handles all client-side routing
 [[redirects]]
   from   = "/*"

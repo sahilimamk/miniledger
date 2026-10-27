@@ -9,7 +9,7 @@ import { AppIcon } from '../components/AppIcon';
 import { AuthLayout, AuthPanelBullet, AuthPanelTitle } from '../components/AuthLayout';
 import { CountryCodePicker } from '../components/CountryCodePicker';
 import { Entrance } from '../components/Entrance';
-import { GlassFieldCard } from '../components/GlassFieldCard';
+import { AuthFieldCard } from '../components/AuthFieldCard';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { useToast } from '../components/Toast';
 import type { AuthStackParamList } from '../navigation/types';
@@ -106,7 +106,7 @@ export function LoginScreen({ navigation }: Props) {
             <Text style={[typography.subhead, styles.fieldLabel, { color: colors.secondaryLabel }]}>
               Phone number
             </Text>
-            <GlassFieldCard focused={phoneFocused}>
+            <AuthFieldCard focused={phoneFocused}>
               <View style={styles.fieldRow}>
                 <CountryCodePicker code={countryCode} onChange={setCountryCode} />
                 <TextInput
@@ -137,7 +137,7 @@ export function LoginScreen({ navigation }: Props) {
                   {phoneError}
                 </Text>
               ) : null}
-            </GlassFieldCard>
+            </AuthFieldCard>
             <Text style={[typography.footnote, styles.note, { color: colors.secondaryLabel }]}>
               You&apos;ll enter a 6-digit code on the next screen.
             </Text>

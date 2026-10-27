@@ -9,7 +9,7 @@ import { useAuth } from '../auth/AuthContext';
 import { AppIcon } from '../components/AppIcon';
 import { AuthLayout, AuthPanelBullet, AuthPanelTitle } from '../components/AuthLayout';
 import { Entrance } from '../components/Entrance';
-import { GlassFieldCard } from '../components/GlassFieldCard';
+import { AuthFieldCard } from '../components/AuthFieldCard';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { useToast } from '../components/Toast';
 import type { AuthStackParamList } from '../navigation/types';
@@ -255,11 +255,8 @@ export function OtpScreen({ route, navigation }: Props) {
 
           {/* Code boxes */}
           <Entrance delay={200}>
-            <GlassFieldCard>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Code entry"
-                onPress={() => inputRef.current?.focus()}
+            <AuthFieldCard focused={boxesFocused}>
+              <View
                 style={[
                   styles.boxesRow,
                   // Web keyboard focus ring on the boxes row (the hidden
@@ -278,18 +275,20 @@ export function OtpScreen({ route, navigation }: Props) {
                   return (
                     <View
                       key={i}
-                      accessibilityLabel={`Digit ${i + 1}${filled ? `, ${code[i]}` : ', empty'}`}
+                      accessible={false}
                       style={[
                         styles.box,
                         {
                           backgroundColor: active
                             ? `${colors.tint}1A`
-                            : colors.systemGroupedBackground,
+                            : colors.secondarySystemGroupedBackground,
                           borderColor: filled || active ? colors.tint : colors.separator,
                         },
                       ]}
                     >
-                      <Text style={[styles.digit, { color: colors.label }]}>{code[i] ?? ''}</Text>
+                      <Text accessible={false} style={[styles.digit, { color: colors.label }]}>
+                        {code[i] ?? ''}
+                      </Text>
                     </View>
                   );
                 })}
@@ -302,7 +301,8 @@ export function OtpScreen({ route, navigation }: Props) {
                   }}
                   onFocus={() => setBoxesFocused(true)}
                   onBlur={() => setBoxesFocused(false)}
-                  accessibilityLabel="Code"
+                  accessibilityLabel="6-digit sign-in code"
+                  accessibilityHint="Enter the code sent to your phone."
                   keyboardType="number-pad"
                   autoComplete="sms-otp"
                   textContentType="oneTimeCode"
@@ -317,7 +317,7 @@ export function OtpScreen({ route, navigation }: Props) {
                   autoFocus
                   style={styles.hiddenInput}
                 />
-              </Pressable>
+              </View>
               {codeError ? (
                 <Text
                   accessibilityLiveRegion="polite"
@@ -326,7 +326,7 @@ export function OtpScreen({ route, navigation }: Props) {
                   {codeError}
                 </Text>
               ) : null}
-            </GlassFieldCard>
+            </AuthFieldCard>
           </Entrance>
 
           {/* Verify button */}
