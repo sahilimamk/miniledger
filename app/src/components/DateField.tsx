@@ -128,6 +128,7 @@ export function DateField({ label, value, onChange, error }: DateFieldProps) {
             accessibilityRole="button"
             accessibilityLabel="Close date picker"
             focusable={false}
+            tabIndex={-1}
             onPress={() => setOpen(false)}
             style={StyleSheet.absoluteFill}
           />

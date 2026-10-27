@@ -24,7 +24,7 @@ export function GroupedSection({ children, header, footer }: GroupedSectionProps
   return (
     <View style={styles.wrapper}>
       {header ? (
-        <Text style={[typography.sectionHeader, styles.header, { color: colors.secondaryLabel }]}>
+        <Text accessibilityRole="header" style={[typography.sectionHeader, styles.header, { color: colors.secondaryLabel }]}>
           {header}
         </Text>
       ) : null}

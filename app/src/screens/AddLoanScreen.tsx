@@ -60,6 +60,8 @@ export function AddLoanScreen({ navigation }: Props) {
   const [dueDate, setDueDate] = useState('');
   const [note, setNote] = useState('');
   const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [dropFocused, setDropFocused] = useState(false);
+  const [removeFocused, setRemoveFocused] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [saving, setSaving] = useState(false);
 
@@ -218,7 +220,18 @@ export function AddLoanScreen({ navigation }: Props) {
                 accessibilityLabel="Remove receipt photo"
                 hitSlop={8}
                 onPress={() => setPhotoUri(null)}
-                style={styles.removeButton}
+                onFocus={() => setRemoveFocused(true)}
+                onBlur={() => setRemoveFocused(false)}
+                style={({ pressed }) => [
+                  styles.removeButton,
+                  pressed && styles.pressed,
+                  removeFocused && {
+                    outlineStyle: 'solid',
+                    outlineWidth: 2,
+                    outlineColor: colors.tintText,
+                    outlineOffset: 2,
+                  },
+                ]}
               >
                 <Text style={[typography.body, { color: colors.systemRed }]}>Remove</Text>
               </Pressable>
@@ -228,10 +241,18 @@ export function AddLoanScreen({ navigation }: Props) {
               accessibilityRole="button"
               accessibilityLabel="Add receipt photo"
               onPress={pickPhoto}
+              onFocus={() => setDropFocused(true)}
+              onBlur={() => setDropFocused(false)}
               style={({ pressed }) => [
                 styles.dropzone,
                 { borderColor: `${colors.tint}66` },
                 pressed && styles.pressed,
+                dropFocused && {
+                  outlineStyle: 'solid',
+                  outlineWidth: 2,
+                  outlineColor: colors.tintText,
+                  outlineOffset: 2,
+                },
               ]}
             >
               <AppIcon symbol="photo.on.rectangle.angled" ionicon="image-outline" size={20} color={colors.tint} />

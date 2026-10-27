@@ -82,6 +82,7 @@ export function CountryCodePicker({ code, onChange }: CountryCodePickerProps) {
             accessibilityRole="button"
             accessibilityLabel="Close country code list"
             focusable={false}
+            tabIndex={-1}
             onPress={() => setOpen(false)}
             style={StyleSheet.absoluteFill}
           />

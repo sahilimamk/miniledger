@@ -3,6 +3,17 @@
   command = "npx expo export --platform web"
   publish = "dist"
 
+# Preview builds must talk to the updated demo API, never to a stale or
+# local backend: the preview frontend still requires an explicit
+# `demo: true` from the server (see app/src/api/auth.ts — a legacy
+# response carrying a `code` with no flag is discarded client-side), and
+# the Render service below is the deployment that returns demo codes
+# (render.yaml sets DEMO_AUTH=true). Note: environment variables set in
+# the Netlify UI take precedence over this file, so a stale UI value
+# would override this pin and must be cleared in Site settings.
+[context.deploy-preview]
+  environment = { EXPO_PUBLIC_API_URL = "https://miniledger-api-imhs.onrender.com" }
+
 # SPA fallback — React Navigation handles all client-side routing
 [[redirects]]
   from   = "/*"

@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
-import { DriftingBlobs } from './DriftingBlobs';
 import { Screen } from './Screen';
 import { useIsWide } from '../hooks/useIsWide';
 import { sectionInset, spacing } from '../theme/spacing';
@@ -38,7 +37,6 @@ export function AuthLayout({ form, panel }: AuthLayoutProps) {
 
   return (
     <Screen maxWidth={showPanel ? (veryWide ? 1240 : 960) : undefined}>
-      <DriftingBlobs />
       <ScrollView
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={[styles.scroll, isWide && styles.scrollWide]}

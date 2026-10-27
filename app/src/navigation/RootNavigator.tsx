@@ -68,12 +68,12 @@ export function RootNavigator() {
           <AuthStack.Screen
             name="Login"
             component={LoginScreen}
-            options={{ title: 'MiniLedger', headerLargeTitle: true }}
+            options={{ headerShown: false }}
           />
           <AuthStack.Screen
             name="Otp"
             component={OtpScreen}
-            options={{ title: 'Enter Code' }}
+            options={{ headerShown: false }}
           />
         </AuthStack.Navigator>
       )}
