@@ -19,6 +19,21 @@ export function normalizePhone(raw: string): string {
 }
 
 /**
+ * Builds the full E.164-style number from a selected country code and the
+ * national part typed by the user. A typed leading "+" wins outright (the
+ * user pasted a complete international number); otherwise the trunk zeros
+ * are dropped, since the country code replaces them.
+ * e.g. buildFullPhone('+91', '098765 43210') -> '+919876543210'.
+ */
+export function buildFullPhone(countryCode: string, national: string): string {
+  const trimmed = national.trim();
+  if (trimmed.startsWith('+')) {
+    return `+${trimmed.replace(/\D/g, '')}`;
+  }
+  return `${countryCode}${trimmed.replace(/\D/g, '').replace(/^0+/, '')}`;
+}
+
+/**
  * Masks a phone for display: keeps the country code (when the number is
  * longer than 10 digits) and the last 4 digits, bullets the rest.
  * e.g. +919999000111 -> "+91 ••••••0111".

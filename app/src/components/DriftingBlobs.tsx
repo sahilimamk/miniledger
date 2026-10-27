@@ -8,22 +8,26 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { useTheme } from '../theme/useTheme';
+import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion';
 
 /**
  * The auth screens' ambient background: two large, very faint colour blobs
  * (tint + indigo) that drift slowly on offset Reanimated loops, so the
  * screen feels alive without anything actually moving fast. Blur through
- * the glass field card is what sells it.
+ * the glass field card is what sells it. With reduced motion preferred,
+ * the blobs render statically — no loops start.
  */
 export function DriftingBlobs() {
   const { colors } = useTheme();
+  const reducedMotion = usePrefersReducedMotion();
   const driftA = useSharedValue(0);
   const driftB = useSharedValue(0);
 
   useEffect(() => {
+    if (reducedMotion) return;
     driftA.value = withRepeat(withTiming(1, { duration: 11000 }), -1, true);
     driftB.value = withRepeat(withTiming(1, { duration: 14000 }), -1, true);
-  }, [driftA, driftB]);
+  }, [driftA, driftB, reducedMotion]);
 
   const styleA = useAnimatedStyle(() => ({
     transform: [{ translateX: driftA.value * -26 }, { translateY: driftA.value * 18 }],

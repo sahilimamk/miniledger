@@ -9,12 +9,25 @@ import { useTheme } from '../theme/useTheme';
  * Real glassmorphism for the auth field cards (expo-blur): the backdrop
  * gradient blobs blur through a translucent wash of the grouped-background
  * color, clipped to the card radius. Replaces the flat solid card — same
- * padding and border, so layouts don't move.
+ * padding and border, so layouts don't move. When `focused`, the hairline
+ * border turns emerald so keyboard focus is visible (RN Web has no
+ * :focus pseudo-class, so the parent field drives this from onFocus).
  */
-export function GlassFieldCard({ children }: { children: ReactNode }) {
+export function GlassFieldCard({
+  children,
+  focused = false,
+}: {
+  children: ReactNode;
+  focused?: boolean;
+}) {
   const { colors, isDark } = useTheme();
   return (
-    <View style={[styles.card, { borderColor: colors.separator }]}>
+    <View
+      style={[
+        styles.card,
+        { borderColor: focused ? colors.tint : colors.separator },
+      ]}
+    >
       <BlurView intensity={55} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
       <View
         style={[

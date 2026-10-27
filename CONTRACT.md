@@ -23,6 +23,10 @@ Overdue = pending AND due_date < today (server-local date).
   logged, or rendered — a real code channel (SMS provider) is then
   required to sign in. The current Render deployment sets `DEMO_AUTH=true`
   (see render.yaml) because no SMS provider is wired yet.
+  Client rule: the demo banner renders whenever the response contains a
+  code — old servers return `{ "code" }` with no `demo` flag, so gating on
+  the flag alone would hide a code the server did send. A code in the
+  response only ever happens in demo mode, so this preserves the gate.
 - `POST /auth/verify-otp` body `{ "phone": "...", "code": "123456" }`
   → `200 { "token": "<jwt>", "user": { "id": "<uuid>", "phone": "..." } }`.
   User row is created on first verify. Wrong code → `401 "invalid code"`;

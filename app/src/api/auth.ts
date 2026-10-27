@@ -3,10 +3,13 @@ import type { VerifyOtpResponse } from './types';
 
 export interface RequestOtpResponse {
   ok: true;
-  /** Present only when the server runs with DEMO_AUTH=true. */
+  /** Present only when the server runs with DEMO_AUTH=true — or on old
+      servers, which return the code unconditionally (no SMS there either). */
   code?: string;
-  /** True when the server is in demo mode (no SMS provider). */
-  demo: boolean;
+  /** True when the server is in demo mode (no SMS provider). Absent on
+      old servers; callers must key demo behavior on `code` presence, not
+      on this flag, or old servers will look non-demo. */
+  demo?: boolean;
 }
 
 /**

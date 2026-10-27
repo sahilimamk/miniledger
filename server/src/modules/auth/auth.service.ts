@@ -97,3 +97,9 @@ export async function verifyOtp(
 export function peekOtp(phone: string): string | undefined {
   return otpStore.get(phone)?.code;
 }
+
+/** Test hook: expires the stored code for a phone immediately. */
+export function expireOtpForTest(phone: string): void {
+  const record = otpStore.get(phone);
+  if (record) record.expiresAt = Date.now() - 1;
+}

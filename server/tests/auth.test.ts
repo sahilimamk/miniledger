@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, afterAll, vi } from 'vitest';
 import request from 'supertest';
 import {
   app,
@@ -8,7 +8,7 @@ import {
   loginAs,
   authHeader,
 } from './helpers';
-import { peekOtp } from '../src/modules/auth/auth.service';
+import { peekOtp, expireOtpForTest } from '../src/modules/auth/auth.service';
 
 const PHONE = '+919876543210';
 
@@ -39,6 +39,27 @@ describe('POST /auth/request-otp', () => {
       expect(res.body.code).toMatch(/^\d{6}$/);
     } finally {
       delete process.env.DEMO_AUTH;
+    }
+  });
+
+  it('never logs the code when demo is off; logs it when demo is on', async () => {
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    try {
+      await request(app).post('/auth/request-otp').send({ phone: PHONE });
+      expect(
+        spy.mock.calls.some((args) => String(args[0]).includes('[OTP]')),
+      ).toBe(false);
+      process.env.DEMO_AUTH = 'true';
+      try {
+        await request(app).post('/auth/request-otp').send({ phone: PHONE });
+      } finally {
+        delete process.env.DEMO_AUTH;
+      }
+      expect(
+        spy.mock.calls.some((args) => String(args[0]).includes('[OTP]')),
+      ).toBe(true);
+    } finally {
+      spy.mockRestore();
     }
   });
 
@@ -117,6 +138,16 @@ describe('POST /auth/verify-otp', () => {
       .post('/auth/verify-otp')
       .send({ phone: PHONE, code });
     expect(second.status).toBe(401);
+  });
+
+  it('an expired code -> 401 code expired', async () => {
+    const code = await freshCode(PHONE);
+    expireOtpForTest(PHONE);
+    const res = await request(app)
+      .post('/auth/verify-otp')
+      .send({ phone: PHONE, code });
+    expect(res.status).toBe(401);
+    expect(res.body.error).toBe('code expired');
   });
 });
 

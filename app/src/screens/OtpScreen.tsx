@@ -1,21 +1,19 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as Haptics from 'expo-haptics';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { requestOtp, verifyOtp } from '../api/auth';
 import { ApiError } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { AppIcon } from '../components/AppIcon';
-import { DriftingBlobs } from '../components/DriftingBlobs';
+import { AuthLayout, AuthPanelBullet, AuthPanelTitle } from '../components/AuthLayout';
 import { Entrance } from '../components/Entrance';
 import { GlassFieldCard } from '../components/GlassFieldCard';
 import { PrimaryButton } from '../components/PrimaryButton';
-import { Screen } from '../components/Screen';
 import { useToast } from '../components/Toast';
 import type { AuthStackParamList } from '../navigation/types';
-import { useIsWide } from '../hooks/useIsWide';
-import { sectionInset, spacing } from '../theme/spacing';
+import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
 import { useTheme } from '../theme/useTheme';
 import { maskPhone, validateOtpCode } from '../utils/validation';
@@ -25,9 +23,8 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'Otp'>;
 const RESEND_SECONDS = 60;
 
 export function OtpScreen({ route, navigation }: Props) {
-  const { phone, code: initialCode, demo } = route.params;
+  const { phone, code: initialCode } = route.params;
   const { colors } = useTheme();
-  const isWide = useIsWide();
   const { login } = useAuth();
   const toast = useToast();
   const inputRef = useRef<TextInput>(null);
@@ -38,6 +35,7 @@ export function OtpScreen({ route, navigation }: Props) {
   const [codeError, setCodeError] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
   const [resending, setResending] = useState(false);
+  const [boxesFocused, setBoxesFocused] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(RESEND_SECONDS);
 
   useEffect(() => {
@@ -63,6 +61,9 @@ export function OtpScreen({ route, navigation }: Props) {
       // editable); anything else is a toast, as before.
       if (err instanceof ApiError && err.message === 'code expired') {
         setCodeError('This code has expired. Request a new one below.');
+        // The resend countdown runs from screen mount, not from code issue —
+        // an expired code must unlock resend immediately, not after the wait.
+        setSecondsLeft(0);
       } else if (err instanceof ApiError && err.message === 'invalid code') {
         setCodeError('That code doesn’t match. Check the digits and try again.');
       } else {
@@ -96,8 +97,11 @@ export function OtpScreen({ route, navigation }: Props) {
       setCodeError(null);
       setSecondsLeft(RESEND_SECONDS);
       inputRef.current?.focus();
+      // A code in the response IS the demo signal: old servers return
+      // { code } with no demo flag, new demo servers return { code, demo:
+      // true }, and new non-demo servers return no code at all.
       toast.show(
-        res.demo && res.code
+        res.code
           ? { title: 'New code sent', message: 'Your demo code has been updated below.' }
           : { title: 'New code requested', message: 'Enter the new code when it arrives.' },
       );
@@ -120,14 +124,25 @@ export function OtpScreen({ route, navigation }: Props) {
 
   const activeIndex = Math.min(code.length, 5);
 
+  const panel = (
+    <>
+      <AuthPanelTitle>About this code</AuthPanelTitle>
+      <AuthPanelBullet>6 digits, expires after 5 minutes.</AuthPanelBullet>
+      <AuthPanelBullet>Wrong code? Check the digits and try again.</AuthPanelBullet>
+      <AuthPanelBullet>Need a new one? Tap Resend below.</AuthPanelBullet>
+      {demoCode ? (
+        <Text style={[typography.body, styles.panelDemoNote, { color: colors.tintText }]}>
+          Demo mode: your code is shown on this screen for testing only.
+        </Text>
+      ) : null}
+    </>
+  );
+
   return (
-    <Screen>
-      <DriftingBlobs />
-      <ScrollView
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={[styles.scroll, isWide && styles.scrollWide]}
-      >
-        <View style={[styles.inner, isWide && styles.innerWide]}>
+    <AuthLayout
+      panel={panel}
+      form={
+        <>
           {/* Hero */}
           <Entrance delay={0}>
             <View style={styles.heroIconWrap}>
@@ -143,7 +158,10 @@ export function OtpScreen({ route, navigation }: Props) {
                 <AppIcon symbol="envelope.fill" ionicon="mail" size={28} color={colors.tint} />
               </View>
             </View>
-            <Text style={[typography.title, styles.title, { color: colors.label }]}>
+            <Text
+              accessibilityRole="header"
+              style={[typography.title, styles.title, { color: colors.label }]}
+            >
               Enter the code
             </Text>
             <Text style={[typography.subhead, styles.subtitle, { color: colors.secondaryLabel }]}>
@@ -156,16 +174,19 @@ export function OtpScreen({ route, navigation }: Props) {
               onPress={() => navigation.goBack()}
               style={styles.editNumberWrap}
             >
-              <Text style={[typography.subhead, styles.editNumberText, { color: colors.tint }]}>
+              <Text style={[typography.subhead, styles.editNumberText, { color: colors.tintText }]}>
                 Use a different number
               </Text>
             </Pressable>
           </Entrance>
 
-          {/* Demo code banner — ONLY when the server runs in demo mode.
-              In production auth this block renders nothing: the code is
-              never in the response, so there is nothing to show. */}
-          {demo && demoCode ? (
+          {/* Demo code banner — shown whenever the server actually sent a
+              code. Old servers return { code } with no demo flag; new demo
+              servers return { code, demo: true }; new non-demo servers
+              return no code, so this block renders nothing there. The code
+              is therefore never shown unless the server sent it, which
+              only ever happens in demo mode. */}
+          {demoCode ? (
             <Entrance delay={100}>
               <Pressable
                 onPress={handleUseCode}
@@ -178,7 +199,7 @@ export function OtpScreen({ route, navigation }: Props) {
               >
                 <View style={styles.demoBannerTop}>
                   <AppIcon symbol="key.fill" ionicon="key" size={15} color={colors.tint} />
-                  <Text style={[typography.footnote, styles.demoLabel, { color: colors.tint }]}>
+                  <Text style={[typography.footnote, styles.demoLabel, { color: colors.tintText }]}>
                     Demo sign-in code
                   </Text>
                 </View>
@@ -198,7 +219,17 @@ export function OtpScreen({ route, navigation }: Props) {
               <Pressable
                 accessibilityLabel="Code entry"
                 onPress={() => inputRef.current?.focus()}
-                style={styles.boxesRow}
+                style={[
+                  styles.boxesRow,
+                  // Web keyboard focus ring on the boxes row (the hidden
+                  // input itself is invisible, so it cannot show focus).
+                  boxesFocused && {
+                    outlineStyle: 'solid',
+                    outlineWidth: 2,
+                    outlineColor: colors.tintText,
+                    outlineOffset: 2,
+                  },
+                ]}
               >
                 {[0, 1, 2, 3, 4, 5].map((i) => {
                   const filled = i < code.length;
@@ -228,6 +259,8 @@ export function OtpScreen({ route, navigation }: Props) {
                     setCode(text.replace(/[^\d]/g, '').slice(0, 6));
                     if (codeError) setCodeError(null);
                   }}
+                  onFocus={() => setBoxesFocused(true)}
+                  onBlur={() => setBoxesFocused(false)}
                   accessibilityLabel="Code"
                   keyboardType="number-pad"
                   autoComplete="sms-otp"
@@ -267,11 +300,11 @@ export function OtpScreen({ route, navigation }: Props) {
             ) : null}
             <View style={styles.resendWrap}>
               {resending ? (
-                <Text style={[typography.subhead, { color: colors.tertiaryLabel }]}>
+                <Text style={[typography.subhead, { color: colors.secondaryLabel }]}>
                   Sending…
                 </Text>
               ) : secondsLeft > 0 ? (
-                <Text style={[typography.subhead, { color: colors.tertiaryLabel }]}>
+                <Text style={[typography.subhead, { color: colors.secondaryLabel }]}>
                   Resend in {secondsLeft}s
                 </Text>
               ) : (
@@ -280,36 +313,22 @@ export function OtpScreen({ route, navigation }: Props) {
                   accessibilityLabel="Resend code"
                   hitSlop={8}
                   onPress={handleResend}
+                  style={styles.resendPressable}
                 >
-                  <Text style={[typography.subhead, styles.resendText, { color: colors.tint }]}>
+                  <Text style={[typography.subhead, styles.resendText, { color: colors.tintText }]}>
                     Resend code
                   </Text>
                 </Pressable>
               )}
             </View>
           </Entrance>
-        </View>
-      </ScrollView>
-    </Screen>
+        </>
+      }
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: sectionInset,
-    paddingVertical: spacing.xxl,
-  },
-  scrollWide: {
-    justifyContent: 'center',
-  },
-  inner: {
-    width: '100%',
-    maxWidth: 440,
-    alignSelf: 'center',
-    gap: spacing.sm,
-  },
-  innerWide: {},
   heroIconWrap: {
     alignItems: 'center',
     marginBottom: spacing.md,
@@ -333,7 +352,7 @@ const styles = StyleSheet.create({
   editNumberWrap: {
     alignItems: 'center',
     marginBottom: spacing.lg,
-    minHeight: 32,
+    minHeight: 44,
     justifyContent: 'center',
   },
   editNumberText: {
@@ -411,10 +430,20 @@ const styles = StyleSheet.create({
   },
   resendWrap: {
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: spacing.lg,
-    minHeight: 20,
+    minHeight: 44,
+  },
+  resendPressable: {
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingVertical: spacing.sm,
   },
   resendText: {
     fontWeight: '600',
+  },
+  panelDemoNote: {
+    lineHeight: 21,
+    marginTop: spacing.xs,
   },
 });

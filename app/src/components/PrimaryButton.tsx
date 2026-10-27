@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
@@ -31,6 +32,7 @@ export function PrimaryButton({
 }: PrimaryButtonProps) {
   const { colors } = useTheme();
   const isDisabled = disabled || loading;
+  const [focused, setFocused] = useState(false);
   const scale = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
   const baseColor = destructive ? colors.systemRed : colors.tint;
@@ -43,6 +45,8 @@ export function PrimaryButton({
         accessibilityState={{ disabled: isDisabled, busy: loading }}
         disabled={isDisabled}
         onPress={onPress}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
         onPressIn={() => {
           scale.value = withSpring(0.97, { damping: 15 });
         }}
@@ -57,6 +61,14 @@ export function PrimaryButton({
               : pressed && !destructive
                 ? colors.accentPressed
                 : baseColor,
+          },
+          // Web keyboard focus ring (outline props are ignored on native).
+          // No layout shift: outlines draw outside the pill.
+          focused && {
+            outlineStyle: 'solid',
+            outlineWidth: 2,
+            outlineColor: colors.tintText,
+            outlineOffset: 2,
           },
         ]}
       >

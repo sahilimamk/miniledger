@@ -59,8 +59,11 @@ Every file has one job. To change a behaviour, edit the one file listed for it.
 | `src/api/loans.ts` | Loan calls: list, create, edit, repay, delete, receipt upload, summary. |
 | `src/auth/AuthContext.tsx` | Login state for the whole app; restores the session on launch. |
 | `src/auth/storage.ts` | Saves the session token on the device. |
-| `src/screens/LoginScreen.tsx` | Phone number entry → sends OTP. |
-| `src/screens/OtpScreen.tsx` | Six digit boxes over one hidden input; auto-submits on the 6th digit; 60s resend countdown; errors as toasts. |
+| `src/screens/LoginScreen.tsx` | Phone number entry → sends OTP. Country-code selector (default +91) + national number, visible label, focus-ring card, desktop side panel via AuthLayout. |
+| `src/screens/OtpScreen.tsx` | Six digit boxes over one hidden input; auto-submits on the 6th digit; 60s resend countdown; invalid vs expired inline errors; masked number + edit-number action; demo banner whenever the server sent a code (labelled DEMO); desktop side panel via AuthLayout. |
+| `src/components/AuthLayout.tsx` | Shared auth shell: centered form on narrow screens; form + product-info side panel at ≥1024px. |
+| `src/components/CountryCodePicker.tsx` | Country-code selector (RN Modal list, no new dependency). |
+| `src/hooks/usePrefersReducedMotion.ts` | `prefers-reduced-motion` hook (web matchMedia; false on native). |
 | `src/components/SummaryCard.tsx` | Wallet-style hero card (phone): real LinearGradient, count-up outstanding amount, repaid progress bar, frosted "Next due" strip, icon stat row below. |
 | `src/components/Avatar.tsx` | Circular initials badge with a two-colour gradient pair hashed from the borrower's name. |
 | `src/components/CountUp.tsx` | Money figure that counts up (ease-out, rAF) — hero amounts on SummaryCard + desktop StatStrip. |
