@@ -75,7 +75,7 @@ export function OverviewScreen({ navigation }: Props) {
           accessibilityRole="button"
           accessibilityLabel="Log out"
           hitSlop={8}
-          style={styles.logoutButton}
+          style={[styles.logoutButton, { minHeight: 44, justifyContent: 'center' }]}
           onPress={() => {
             confirmAction({
               title: 'Log out?',
@@ -169,6 +169,7 @@ export function OverviewScreen({ navigation }: Props) {
             {overdueLoans.length > 0 ? (
               <View>
                 <Text
+                  accessibilityRole="header"
                   style={[
                     typography.sectionHeader,
                     styles.sectionTitle,
@@ -188,6 +189,7 @@ export function OverviewScreen({ navigation }: Props) {
             ) : null}
 
             <Text
+              accessibilityRole="header"
               style={[
                 typography.sectionHeader,
                 styles.sectionTitle,
@@ -254,6 +256,8 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
     marginHorizontal: sectionInset * 2,
     alignSelf: 'flex-start',
+    minHeight: 44,
+    justifyContent: 'center',
   },
   pressed: {
     opacity: 0.7,

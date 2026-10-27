@@ -38,6 +38,7 @@ interface DateFieldProps {
 export function DateField({ label, value, onChange, error }: DateFieldProps) {
   const { colors } = useTheme();
   const [open, setOpen] = useState(false);
+  const [triggerFocused, setTriggerFocused] = useState(false);
   const now = new Date();
   const parsed = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
   const sel = parsed
@@ -77,11 +78,20 @@ export function DateField({ label, value, onChange, error }: DateFieldProps) {
         accessibilityRole="button"
         accessibilityLabel={label}
         onPress={openPicker}
+        onFocus={() => setTriggerFocused(true)}
+        onBlur={() => setTriggerFocused(false)}
         style={[
           styles.field,
           {
             backgroundColor: colors.secondarySystemBackground,
             borderColor: error ? colors.systemRed : colors.separator,
+          },
+          // Web keyboard focus ring (same pattern as PrimaryButton).
+          triggerFocused && {
+            outlineStyle: 'solid',
+            outlineWidth: 2,
+            outlineColor: colors.tintText,
+            outlineOffset: 2,
           },
         ]}
       >
@@ -89,7 +99,7 @@ export function DateField({ label, value, onChange, error }: DateFieldProps) {
         <Text
           style={[
             typography.body,
-            { color: value ? colors.label : colors.tertiaryLabel },
+            { color: value ? colors.label : colors.secondaryLabel },
           ]}
         >
           {value ? formatDate(value) : 'Pick a date'}
@@ -147,7 +157,7 @@ export function DateField({ label, value, onChange, error }: DateFieldProps) {
               {WEEKDAYS.map((d) => (
                 <Text
                   key={d}
-                  style={[typography.caption, styles.weekDay, { color: colors.tertiaryLabel }]}
+                  style={[typography.caption, styles.weekDay, { color: colors.secondaryLabel }]}
                 >
                   {d}
                 </Text>
@@ -165,6 +175,7 @@ export function DateField({ label, value, onChange, error }: DateFieldProps) {
                     key={iso}
                     accessibilityRole="button"
                     accessibilityLabel={formatDate(iso)}
+                    hitSlop={4}
                     style={styles.cell}
                     onPress={() => {
                       onChange(iso);
@@ -201,6 +212,7 @@ export function DateField({ label, value, onChange, error }: DateFieldProps) {
                   onChange('');
                   setOpen(false);
                 }}
+                style={styles.sheetFootButton}
               >
                 <Text style={[typography.subhead, { color: colors.systemRed }]}>Clear</Text>
               </Pressable>
@@ -212,6 +224,7 @@ export function DateField({ label, value, onChange, error }: DateFieldProps) {
                   onChange(todayIso);
                   setOpen(false);
                 }}
+                style={styles.sheetFootButton}
               >
                 <Text style={[typography.subhead, { color: colors.tint }]}>Today</Text>
               </Pressable>
@@ -300,5 +313,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: spacing.md,
     paddingHorizontal: spacing.xs,
+  },
+  sheetFootButton: {
+    minHeight: 44,
+    justifyContent: 'center',
   },
 });

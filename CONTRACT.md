@@ -22,11 +22,19 @@ Overdue = pending AND due_date < today (server-local date).
   on screen labelled DEMO. With the flag off the code is never returned,
   logged, or rendered — a real code channel (SMS provider) is then
   required to sign in. The current Render deployment sets `DEMO_AUTH=true`
-  (see render.yaml) because no SMS provider is wired yet.
-  Client rule: the demo banner renders whenever the response contains a
-  code — old servers return `{ "code" }` with no `demo` flag, so gating on
-  the flag alone would hide a code the server did send. A code in the
-  response only ever happens in demo mode, so this preserves the gate.
+  (see render.yaml) because no SMS provider is wired yet; that is an
+  explicit opt-in, and it must be set to 'false' (with a real SMS
+  provider wired) before this is treated as production auth.
+  Client rule (strict, enforced in `app/src/api/auth.ts`): a code is
+  shown ONLY when the server explicitly declared `demo: true`. A legacy
+  response carrying a `code` with no demo flag is NOT proof of demo mode
+  — the client discards its code on receipt, never stores, renders, or
+  logs it, and treats the response as non-demo. Hiding the banner in the
+  UI is not the security mechanism; the code never reaches a screen
+  unless demo mode was explicit. Consequence: a preview frontend talking
+  to an old server (code, no flag) shows no code, even though the server
+  sent one — that is the secure behavior, and sign-in there needs a
+  demo-on server build.
 - `POST /auth/verify-otp` body `{ "phone": "...", "code": "123456" }`
   → `200 { "token": "<jwt>", "user": { "id": "<uuid>", "phone": "..." } }`.
   User row is created on first verify. Wrong code → `401 "invalid code"`;

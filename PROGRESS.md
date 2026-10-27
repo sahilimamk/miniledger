@@ -118,3 +118,18 @@ Timestamped work log (BTASM convention). Newest entries last.
   verified from the laptop: SETUP-DONE, web 200, OTP 200 + allow-origin,
   bundle compiled (988 modules), processes in the v12 folders. Brief
   (§2–§4, §7, §9) + FROM_MUSE + FILEMAP + MEMORY updated to v12.
+
+## 2026-10-27
+
+- ~18:00 IST — Quality pass on branch uiux/2026-10-27-responsive-signin (PR #1, after 631b567):
+  strict demo-code rule (a code is shown ONLY when the server explicitly declares
+  demo: true; legacy code-without-flag responses are discarded client-side, never
+  rendered/logged — CONTRACT.md updated, server contract unchanged and already
+  tested 76/76); OTP boxes tap-to-focus fix on web (digit boxes pointer-transparent
+  so taps reach the hidden input, verified live); form focus/contrast polish
+  (TextField + DateField focus states, readable placeholders, 44px targets,
+  section headers, toast live region, FAB pulse respects reduced motion).
+  Verified: app tsc clean, server tests 76/76, Expo web export clean; auth
+  screenshots at 375/768/890/1280/1440 + dashboard/loans/detail/add-loan at
+  375/1280, zero horizontal overflow; demo banner present with a demo-on server,
+  absent for legacy and demo-off responses at all four auth widths.

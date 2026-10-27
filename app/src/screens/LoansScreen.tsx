@@ -34,6 +34,7 @@ import { PrimaryButton } from '../components/PrimaryButton';
 import { Screen } from '../components/Screen';
 import { useRailLayout } from '../hooks/useRailLayout';
 import { mainNav } from '../hooks/useMainNav';
+import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion';
 import { confirmAction } from '../utils/confirm';
 import type { MainStackParamList } from '../navigation/types';
 import { useIsWide } from '../hooks/useIsWide';
@@ -55,10 +56,14 @@ export function LoansScreen({ navigation }: Props) {
   const fabAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: fabScale.value }],
   }));
+  // The pulsing ring is decorative motion: under prefers-reduced-motion it
+  // is omitted entirely (Entrance/DriftingBlobs already honor the same).
+  const reduceMotion = usePrefersReducedMotion();
   const fabPulse = useSharedValue(0);
   useEffect(() => {
+    if (reduceMotion) return;
     fabPulse.value = withRepeat(withTiming(1, { duration: 2100 }), -1, false);
-  }, [fabPulse]);
+  }, [fabPulse, reduceMotion]);
   const fabRingStyle = useAnimatedStyle(() => ({
     transform: [{ scale: interpolate(fabPulse.value, [0, 1], [1, 1.45]) }],
     opacity: interpolate(fabPulse.value, [0, 1], [0.45, 0]),
@@ -101,7 +106,7 @@ export function LoansScreen({ navigation }: Props) {
           accessibilityRole="button"
           accessibilityLabel="Log out"
           hitSlop={8}
-          style={styles.logoutButton}
+          style={[styles.logoutButton, { minHeight: 44, justifyContent: 'center' }]}
           onPress={() => {
             confirmAction({
               title: 'Log out?',
@@ -168,6 +173,7 @@ export function LoansScreen({ navigation }: Props) {
             {error ? <ErrorBanner message={error} onRetry={() => load(false)} /> : null}
             {items.length > 0 ? (
               <Text
+                accessibilityRole="header"
                 style={[
                   typography.sectionHeader,
                   styles.listHeader,
@@ -213,10 +219,12 @@ export function LoansScreen({ navigation }: Props) {
       />
 
       <View style={[styles.fabWrap, { bottom: insets.bottom + spacing.lg }]}>
-        <Animated.View
-          pointerEvents="none"
-          style={[styles.fabRing, { borderColor: colors.tint }, fabRingStyle]}
-        />
+        {!reduceMotion ? (
+          <Animated.View
+            pointerEvents="none"
+            style={[styles.fabRing, { borderColor: colors.tint }, fabRingStyle]}
+          />
+        ) : null}
         <Animated.View style={fabAnimatedStyle}>
           <Pressable
             accessibilityRole="button"

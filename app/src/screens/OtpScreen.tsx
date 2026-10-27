@@ -23,7 +23,7 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'Otp'>;
 const RESEND_SECONDS = 60;
 
 export function OtpScreen({ route, navigation }: Props) {
-  const { phone, code: initialCode } = route.params;
+  const { phone, code: initialCode, demo: initialDemo } = route.params;
   const { colors } = useTheme();
   const { login } = useAuth();
   const toast = useToast();
@@ -31,7 +31,14 @@ export function OtpScreen({ route, navigation }: Props) {
   const verifyingRef = useRef(false);
 
   const [code, setCode] = useState('');
-  const [demoCode, setDemoCode] = useState<string | undefined>(initialCode);
+  // Strict demo rule (see api/auth.ts): the code is shown only when the
+  // server explicitly declared demo mode. A code arriving without
+  // `demo: true` is dropped at the door — it is never stored or rendered.
+  const [isDemo, setIsDemo] = useState(initialDemo === true);
+  const [demoCode, setDemoCode] = useState<string | undefined>(
+    initialDemo === true ? initialCode : undefined,
+  );
+  const showDemoCode = isDemo && demoCode !== undefined;
   const [codeError, setCodeError] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
   const [resending, setResending] = useState(false);
@@ -95,15 +102,16 @@ export function OtpScreen({ route, navigation }: Props) {
     try {
       const res = await requestOtp(phone);
       setCode('');
-      setDemoCode(res.code);
+      setIsDemo(res.demo);
+      setDemoCode(res.demo ? res.code : undefined);
       setCodeError(null);
       setSecondsLeft(RESEND_SECONDS);
       inputRef.current?.focus();
-      // A code in the response IS the demo signal: old servers return
-      // { code } with no demo flag, new demo servers return { code, demo:
-      // true }, and new non-demo servers return no code at all.
+      // The toast follows the explicit demo flag, never code presence: a
+      // legacy response carrying a code with no flag is treated as
+      // non-demo, so its code is never mentioned or shown.
       toast.show(
-        res.code
+        res.demo
           ? { title: 'New code sent', message: 'Your demo code has been updated below.' }
           : { title: 'New code requested', message: 'Enter the new code when it arrives.' },
       );
@@ -119,7 +127,7 @@ export function OtpScreen({ route, navigation }: Props) {
   }
 
   function handleUseCode() {
-    if (!demoCode) return;
+    if (!showDemoCode || !demoCode) return;
     setCode(demoCode);
     setCodeError(null);
   }
@@ -132,7 +140,7 @@ export function OtpScreen({ route, navigation }: Props) {
       <AuthPanelBullet>6 digits, expires after 5 minutes.</AuthPanelBullet>
       <AuthPanelBullet>Wrong code? Check the digits and try again.</AuthPanelBullet>
       <AuthPanelBullet>Need a new one? Tap Resend below.</AuthPanelBullet>
-      {demoCode ? (
+      {showDemoCode ? (
         <Text style={[typography.body, styles.panelDemoNote, { color: colors.tintText }]}>
           Demo mode: your code is shown on this screen for testing only.
         </Text>
@@ -192,13 +200,14 @@ export function OtpScreen({ route, navigation }: Props) {
             </Pressable>
           </Entrance>
 
-          {/* Demo code banner — shown whenever the server actually sent a
-              code. Old servers return { code } with no demo flag; new demo
-              servers return { code, demo: true }; new non-demo servers
-              return no code, so this block renders nothing there. The code
-              is therefore never shown unless the server sent it, which
-              only ever happens in demo mode. */}
-          {demoCode ? (
+          {/* Demo code banner — shown ONLY when the server explicitly
+              declared demo mode (`demo: true`) AND sent a code. A legacy
+              response carrying a code with no demo flag is treated as
+              non-demo: api/auth.ts drops its code, so this block renders
+              nothing there. Hiding the banner in the UI is not the
+              security mechanism — the code never reaches this screen
+              unless demo mode was explicit. */}
+          {showDemoCode && demoCode ? (
             <Entrance delay={100}>
               <Pressable
                 onPress={handleUseCode}
@@ -278,6 +287,14 @@ export function OtpScreen({ route, navigation }: Props) {
                   autoComplete="sms-otp"
                   textContentType="oneTimeCode"
                   caretHidden
+                  // Focused on arrival on native; on web, tapping the
+                  // row focuses it (see the pointer-transparent boxes
+                  // below). (Clicking the row alone did NOT focus this
+                  // input on web before that change — the digit boxes
+                  // sat above it in hit-testing — so the boxes are
+                  // pointer-transparent and taps fall through to the
+                  // input itself, verified live: row click focuses it.)
+                  autoFocus
                   style={styles.hiddenInput}
                 />
               </Pressable>
@@ -426,6 +443,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
+    // Pointer-transparent: mouse/touch taps fall through to the hidden
+    // input beneath, which is what actually receives focus and keystrokes.
+    // (Without this, the boxes intercepted taps and the input never got
+    // focus on web, so clicking the boxes and typing did nothing.)
+    pointerEvents: 'none',
   },
   digit: {
     fontSize: 24,

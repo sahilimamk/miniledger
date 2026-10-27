@@ -167,7 +167,7 @@ export function AddLoanScreen({ navigation }: Props) {
             value={friendPhone}
             onChangeText={setFriendPhone}
             error={errors.friendPhone}
-            placeholder="98100 12345 — optional, for reminders"
+            placeholder="98100 12345 — optional"
             keyboardType="phone-pad"
             autoCapitalize="none"
             autoCorrect={false}
@@ -209,6 +209,7 @@ export function AddLoanScreen({ navigation }: Props) {
                 accessibilityLabel="Remove receipt photo"
                 hitSlop={8}
                 onPress={() => setPhotoUri(null)}
+                style={styles.removeButton}
               >
                 <Text style={[typography.body, { color: colors.systemRed }]}>Remove</Text>
               </Pressable>
@@ -226,7 +227,7 @@ export function AddLoanScreen({ navigation }: Props) {
             >
               <AppIcon symbol="photo.on.rectangle.angled" ionicon="image-outline" size={20} color={colors.tint} />
               <Text style={[typography.body, styles.dropzoneLabel, { color: colors.tint }]}>Attach receipt</Text>
-              <Text style={[typography.footnote, { color: colors.tertiaryLabel }]}>Photo · up to 5 MB</Text>
+              <Text style={[typography.footnote, { color: colors.secondaryLabel }]}>Photo · up to 5 MB</Text>
             </Pressable>
           )}
         </GroupedSection>
@@ -279,6 +280,10 @@ const styles = StyleSheet.create({
   },
   photoLabel: {
     flex: 1,
+  },
+  removeButton: {
+    minHeight: 44,
+    justifyContent: 'center',
   },
   thumbnail: {
     width: 44,

@@ -1,7 +1,11 @@
 export type AuthStackParamList = {
   Login: undefined;
-  /** `code` is present only when the server sent one (demo behavior).
-      `demo` is informational and absent on old servers; nothing gates on it. */
+  /**
+   * `demo` is the explicit demo-mode declaration from the server and the
+   * ONLY gate for showing a code: `code` is rendered only when
+   * `demo === true`. A `code` arriving with `demo` absent or false (e.g.
+   * a legacy server) is discarded by api/auth.ts and must never be shown.
+   */
   Otp: { phone: string; code?: string; demo?: boolean };
 };
 

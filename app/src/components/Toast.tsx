@@ -96,6 +96,7 @@ function ToastHost({
       >
         <Animated.View
           key={toast.id}
+          accessibilityLiveRegion="polite"
           entering={FadeInUp.springify().damping(17)}
           exiting={FadeOutUp}
           style={[

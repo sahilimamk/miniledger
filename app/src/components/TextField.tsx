@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
 
 import { AppIcon } from './AppIcon';
@@ -20,10 +21,13 @@ export interface TextFieldProps extends Omit<TextInputProps, 'style'> {
 /**
  * A form field in the v7 style: small label above a filled well (elevated
  * surface color, hairline border, 14 radius). The error state turns the
- * border rose and prints the message underneath.
+ * border rose and prints the message underneath. Focus turns the border
+ * emerald, so the field never looks disabled while it is active; the
+ * placeholder uses the readable secondary label, not the faint tertiary.
  */
 export function TextField({ label, error, icon, ...inputProps }: TextFieldProps) {
   const { colors } = useTheme();
+  const [focused, setFocused] = useState(false);
 
   return (
     <View style={styles.wrap}>
@@ -35,7 +39,7 @@ export function TextField({ label, error, icon, ...inputProps }: TextFieldProps)
           styles.field,
           {
             backgroundColor: colors.secondarySystemBackground,
-            borderColor: error ? colors.systemRed : colors.separator,
+            borderColor: error ? colors.systemRed : focused ? colors.tint : colors.separator,
           },
         ]}
       >
@@ -47,7 +51,15 @@ export function TextField({ label, error, icon, ...inputProps }: TextFieldProps)
         <TextInput
           {...inputProps}
           accessibilityLabel={inputProps.accessibilityLabel ?? label}
-          placeholderTextColor={colors.tertiaryLabel}
+          placeholderTextColor={colors.secondaryLabel}
+          onFocus={(e) => {
+            setFocused(true);
+            inputProps.onFocus?.(e);
+          }}
+          onBlur={(e) => {
+            setFocused(false);
+            inputProps.onBlur?.(e);
+          }}
           style={[typography.body, styles.input, { color: colors.label }]}
         />
       </View>
