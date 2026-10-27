@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import type { Loan } from '../api/types';
@@ -32,6 +33,8 @@ export function LoansDesktop({
   onOpenLoan,
 }: LoansDesktopProps) {
   const { colors } = useTheme();
+  const [addFocused, setAddFocused] = useState(false);
+  const [firstFocused, setFirstFocused] = useState(false);
   const pending = loans.filter((loan) => !loan.repaid).length;
   const overdue = loans.filter((loan) => loan.isOverdue).length;
   const countLine =
@@ -45,7 +48,7 @@ export function LoansDesktop({
     <ScrollView contentContainerStyle={styles.scroll}>
       <View style={styles.pageHead}>
         <View>
-          <Text style={[typography.largeTitle, { color: colors.label }]}>Loans</Text>
+          <Text accessibilityRole="header" style={[typography.largeTitle, { color: colors.label }]}>Loans</Text>
           <Text
             style={[
               typography.subhead,
@@ -60,9 +63,18 @@ export function LoansDesktop({
           accessibilityRole="button"
           accessibilityLabel="Add loan"
           onPress={onAddLoan}
+          onFocus={() => setAddFocused(true)}
+          onBlur={() => setAddFocused(false)}
           style={({ pressed }) => [
             styles.addButton,
-            { backgroundColor: pressed ? colors.accentPressed : colors.tint },
+            // White on tintText is 6.22:1 (AA); the brighter tint was 4.06:1.
+            { backgroundColor: pressed ? colors.accentPressed : colors.tintText },
+            addFocused && {
+              outlineStyle: 'solid',
+              outlineWidth: 2,
+              outlineColor: colors.tintText,
+              outlineOffset: 2,
+            },
           ]}
         >
           <AppIcon symbol="plus" ionicon="add" size={16} color={colors.onTint} />
@@ -89,9 +101,17 @@ export function LoansDesktop({
               accessibilityRole="button"
               accessibilityLabel="Add your first loan"
               onPress={onAddLoan}
+              onFocus={() => setFirstFocused(true)}
+              onBlur={() => setFirstFocused(false)}
               style={({ pressed }) => [
             styles.addButton,
-            { backgroundColor: pressed ? colors.accentPressed : colors.tint },
+            { backgroundColor: pressed ? colors.accentPressed : colors.tintText },
+            firstFocused && {
+              outlineStyle: 'solid',
+              outlineWidth: 2,
+              outlineColor: colors.tintText,
+              outlineOffset: 2,
+            },
           ]}
             >
               <AppIcon symbol="plus" ionicon="add" size={16} color={colors.onTint} />
@@ -133,7 +153,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-    height: 40,
+    minHeight: 44,
     paddingHorizontal: spacing.lg,
     borderRadius: 20,
     overflow: 'hidden',

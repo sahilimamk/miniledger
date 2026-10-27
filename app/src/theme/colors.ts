@@ -32,6 +32,9 @@ export interface Palette {
   systemTeal: string;
   /** Accent / interactive color (flat emerald). */
   tint: string;
+  /** Darker emerald for small text links and labels (6.2:1 on white —
+      the plain tint at 4.06:1 fails AA for 12–14px text). */
+  tintText: string;
   /** Accent while pressed / hovered. */
   accentPressed: string;
   /** Tint wash behind danger content (the overdue stat card). */
@@ -49,7 +52,7 @@ const palette: Palette = {
   secondaryLabel: '#5B6B7D',
   tertiaryLabel: '#93A3B5',
   separator: 'rgba(10, 37, 64, 0.08)',
-  systemRed: '#D64545',
+  systemRed: '#C23333',
   systemGreen: '#0D8F6F',
   systemOrange: '#B7791F',
   systemGray: '#8A99AB',
@@ -57,6 +60,7 @@ const palette: Palette = {
   systemPurple: '#5B6B7D',
   systemTeal: '#0D8F6F',
   tint: '#0D8F6F',
+  tintText: '#0A6E55',
   accentPressed: '#0B7A5F',
   dangerTint: '#FDECEC',
   onTint: '#FFFFFF',

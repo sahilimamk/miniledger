@@ -47,17 +47,28 @@ export function OverviewScreen({ navigation }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
+    // Loans and summary load independently: the old Promise.all meant a
+    // summary-only failure discarded the loans too and showed "Nothing
+    // loaded" even though the loans had arrived. Now a summary failure
+    // shows the loans with an error banner instead; a loans failure
+    // still shows the empty error screen (and skips the summary call).
+    let loanData: Loan[];
     try {
-      const [loanData, summaryData] = await Promise.all([listLoans(), getSummary()]);
-      const sorted = [...loanData].sort((a, b) => {
-        if (a.repaid !== b.repaid) return a.repaid ? 1 : -1;
-        return a.dueDate.localeCompare(b.dueDate);
-      });
-      setLoans(sorted);
-      setSummary(summaryData);
-      setError(null);
+      loanData = await listLoans();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not load your loans.');
+      return;
+    }
+    const sorted = [...loanData].sort((a, b) => {
+      if (a.repaid !== b.repaid) return a.repaid ? 1 : -1;
+      return a.dueDate.localeCompare(b.dueDate);
+    });
+    setLoans(sorted);
+    setError(null);
+    try {
+      setSummary(await getSummary());
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not load the summary.');
     }
   }, []);
 
@@ -75,7 +86,7 @@ export function OverviewScreen({ navigation }: Props) {
           accessibilityRole="button"
           accessibilityLabel="Log out"
           hitSlop={8}
-          style={styles.logoutButton}
+          style={[styles.logoutButton, { minHeight: 44, justifyContent: 'center' }]}
           onPress={() => {
             confirmAction({
               title: 'Log out?',
@@ -86,7 +97,7 @@ export function OverviewScreen({ navigation }: Props) {
             });
           }}
         >
-          <Text style={[typography.body, { color: colors.tint }]}>Log out</Text>
+          <Text style={[typography.body, { color: colors.tintText }]}>Log out</Text>
         </Pressable>
       ),
     });
@@ -169,6 +180,7 @@ export function OverviewScreen({ navigation }: Props) {
             {overdueLoans.length > 0 ? (
               <View>
                 <Text
+                  accessibilityRole="header"
                   style={[
                     typography.sectionHeader,
                     styles.sectionTitle,
@@ -188,6 +200,7 @@ export function OverviewScreen({ navigation }: Props) {
             ) : null}
 
             <Text
+              accessibilityRole="header"
               style={[
                 typography.sectionHeader,
                 styles.sectionTitle,
@@ -210,7 +223,7 @@ export function OverviewScreen({ navigation }: Props) {
               onPress={() => navigation.navigate('Loans')}
               style={({ pressed }) => [styles.viewAll, pressed && styles.pressed]}
             >
-              <Text style={[typography.headline, { color: colors.tint }]}>
+              <Text style={[typography.headline, { color: colors.tintText }]}>
                 View all loans
               </Text>
               <AppIcon
@@ -254,6 +267,8 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
     marginHorizontal: sectionInset * 2,
     alignSelf: 'flex-start',
+    minHeight: 44,
+    justifyContent: 'center',
   },
   pressed: {
     opacity: 0.7,

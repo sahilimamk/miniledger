@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { pool } from '../../db/pool';
-import { env } from '../../config/env';
+import { env, isDemoAuth } from '../../config/env';
 import { HttpError } from '../../utils/httpError';
 
 interface OtpRecord {
@@ -10,8 +10,9 @@ interface OtpRecord {
   attempts: number;
 }
 
-// Mock OTP store: in-memory only, 5-minute expiry. Codes are printed to the
-// server log (no SMS in this build).
+// Mock OTP store: in-memory only, 5-minute expiry. In demo mode the code is
+// printed to the server log (no SMS in this build); otherwise it is never
+// logged anywhere.
 const otpStore = new Map<string, OtpRecord>();
 const OTP_TTL_MS = 5 * 60 * 1000;
 
@@ -41,7 +42,9 @@ export function requestOtp(phone: string): string {
   const code = String(crypto.randomInt(100000, 1000000));
   // A fresh request supersedes any previous code and resets its guess count.
   otpStore.set(phone, { code, expiresAt: now + OTP_TTL_MS, attempts: 0 });
-  console.log(`[OTP] phone=${phone} code=${code}`);
+  if (isDemoAuth()) {
+    console.log(`[OTP] phone=${phone} code=${code}`);
+  }
   return code;
 }
 
@@ -55,9 +58,12 @@ export async function verifyOtp(
   code: string,
 ): Promise<AuthResult> {
   const record = otpStore.get(phone);
-  if (!record || record.expiresAt < Date.now()) {
-    if (record) otpStore.delete(phone);
+  if (!record) {
     throw new HttpError(401, 'invalid or expired code');
+  }
+  if (record.expiresAt < Date.now()) {
+    otpStore.delete(phone);
+    throw new HttpError(401, 'code expired');
   }
   if (record.code !== code) {
     record.attempts += 1;
@@ -66,7 +72,7 @@ export async function verifyOtp(
       // with the correct code — are rejected.
       otpStore.delete(phone);
     }
-    throw new HttpError(401, 'invalid or expired code');
+    throw new HttpError(401, 'invalid code');
   }
   otpStore.delete(phone);
   otpRequestLog.delete(phone);
@@ -90,4 +96,10 @@ export async function verifyOtp(
 /** Test hook: lets the suite complete the OTP flow without scraping logs. */
 export function peekOtp(phone: string): string | undefined {
   return otpStore.get(phone)?.code;
+}
+
+/** Test hook: expires the stored code for a phone immediately. */
+export function expireOtpForTest(phone: string): void {
+  const record = otpStore.get(phone);
+  if (record) record.expiresAt = Date.now() - 1;
 }

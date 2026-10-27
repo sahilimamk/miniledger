@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
@@ -31,9 +32,13 @@ export function PrimaryButton({
 }: PrimaryButtonProps) {
   const { colors } = useTheme();
   const isDisabled = disabled || loading;
+  const [focused, setFocused] = useState(false);
   const scale = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
-  const baseColor = destructive ? colors.systemRed : colors.tint;
+  // White on tintText is 6.22:1 (AA); white on the brighter tint #0D8F6F
+  // is only 4.06:1, so buttons use tintText. Pressed deepens to
+  // accentPressed #0B7A5F (5.30:1, still AA) — the press feedback stays.
+  const baseColor = destructive ? colors.systemRed : colors.tintText;
 
   return (
     <Animated.View style={animatedStyle}>
@@ -43,6 +48,8 @@ export function PrimaryButton({
         accessibilityState={{ disabled: isDisabled, busy: loading }}
         disabled={isDisabled}
         onPress={onPress}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
         onPressIn={() => {
           scale.value = withSpring(0.97, { damping: 15 });
         }}
@@ -57,6 +64,14 @@ export function PrimaryButton({
               : pressed && !destructive
                 ? colors.accentPressed
                 : baseColor,
+          },
+          // Web keyboard focus ring (outline props are ignored on native).
+          // No layout shift: outlines draw outside the pill.
+          focused && {
+            outlineStyle: 'solid',
+            outlineWidth: 2,
+            outlineColor: colors.tintText,
+            outlineOffset: 2,
           },
         ]}
       >

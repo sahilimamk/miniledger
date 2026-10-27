@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   FadeInDown,
@@ -9,6 +10,7 @@ import Animated, {
 import type { Loan } from '../api/types';
 import { AppIcon } from './AppIcon';
 import { Avatar } from './Avatar';
+import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion';
 import { sectionInset, spacing } from '../theme/spacing';
 import { font, typography } from '../theme/typography';
 import { cardShadow } from '../theme/elevation';
@@ -32,6 +34,8 @@ interface LoanRowProps {
  */
 export function LoanRow({ loan, onPress, index = 0, card = false }: LoanRowProps) {
   const { colors, isDark } = useTheme();
+  const [focused, setFocused] = useState(false);
+  const reducedMotion = usePrefersReducedMotion();
   const scale = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
@@ -52,9 +56,15 @@ export function LoanRow({ loan, onPress, index = 0, card = false }: LoanRowProps
 
   return (
     <Animated.View
-      entering={FadeInDown.delay(Math.min(index, 8) * 50)
-        .springify()
-        .damping(19)}
+      // With reduced motion preferred, rows render immediately — the
+      // cascade-in is skipped (same pattern as Entrance).
+      entering={
+        reducedMotion
+          ? undefined
+          : FadeInDown.delay(Math.min(index, 8) * 50)
+              .springify()
+              .damping(19)
+      }
       style={[
         animatedStyle,
         card && {
@@ -70,6 +80,8 @@ export function LoanRow({ loan, onPress, index = 0, card = false }: LoanRowProps
         accessibilityRole="button"
         accessibilityLabel={`${loan.friendName}, ${formatINR(loan.amount)}, due ${formatDate(loan.dueDate)}${loan.repaid ? ', repaid' : loan.isOverdue ? ', overdue' : ''}`}
         onPress={() => onPress(loan)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
         onPressIn={() => {
           scale.value = withSpring(0.97, { damping: 15 });
         }}
@@ -79,6 +91,14 @@ export function LoanRow({ loan, onPress, index = 0, card = false }: LoanRowProps
         style={({ pressed }) => [
           styles.row,
           pressed && { backgroundColor: colors.secondarySystemBackground },
+          // Web keyboard focus ring: rows are the main interactive element
+          // in every list, so they must show focus like buttons do.
+          focused && {
+            outlineStyle: 'solid',
+            outlineWidth: 2,
+            outlineColor: colors.tintText,
+            outlineOffset: 2,
+          },
         ]}
       >
         <Avatar name={loan.friendName} size={40} />

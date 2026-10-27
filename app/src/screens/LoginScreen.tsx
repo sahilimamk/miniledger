@@ -1,45 +1,45 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as Haptics from 'expo-haptics';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { requestOtp } from '../api/auth';
 import { ApiError } from '../api/client';
 import { AppIcon } from '../components/AppIcon';
-import { DriftingBlobs } from '../components/DriftingBlobs';
+import { AuthLayout, AuthPanelBullet, AuthPanelTitle } from '../components/AuthLayout';
+import { CountryCodePicker } from '../components/CountryCodePicker';
 import { Entrance } from '../components/Entrance';
 import { GlassFieldCard } from '../components/GlassFieldCard';
 import { PrimaryButton } from '../components/PrimaryButton';
-import { Screen } from '../components/Screen';
 import { useToast } from '../components/Toast';
 import type { AuthStackParamList } from '../navigation/types';
-import { useIsWide } from '../hooks/useIsWide';
-import { sectionInset, spacing } from '../theme/spacing';
+import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
 import { useTheme } from '../theme/useTheme';
-import { normalizePhone, validatePhone } from '../utils/validation';
+import { buildFullPhone, validatePhone } from '../utils/validation';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
 export function LoginScreen({ navigation }: Props) {
   const { colors } = useTheme();
-  const isWide = useIsWide();
   const toast = useToast();
-  const [phone, setPhone] = useState('');
+  const [countryCode, setCountryCode] = useState('+91');
+  const [national, setNational] = useState('');
   const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [phoneFocused, setPhoneFocused] = useState(false);
   const [sending, setSending] = useState(false);
 
   async function handleSendCode() {
-    const error = validatePhone(phone);
+    const full = buildFullPhone(countryCode, national);
+    const error = validatePhone(full);
     setPhoneError(error);
     if (error) return;
 
     setSending(true);
     try {
-      const normalized = normalizePhone(phone);
-      const code = await requestOtp(normalized);
+      const res = await requestOtp(full);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
-      navigation.navigate('Otp', { phone: normalized, code });
+      navigation.navigate('Otp', { phone: full, code: res.code, demo: res.demo });
     } catch (err) {
       toast.show({
         variant: 'error',
@@ -51,14 +51,25 @@ export function LoginScreen({ navigation }: Props) {
     }
   }
 
+  const panel = (
+    <>
+      <AuthPanelTitle>Why MiniLedger?</AuthPanelTitle>
+      <AuthPanelBullet>Record what you lend in seconds.</AuthPanelBullet>
+      <AuthPanelBullet>See what&apos;s overdue at a glance.</AuthPanelBullet>
+      <AuthPanelBullet>Mark loans repaid when money comes back.</AuthPanelBullet>
+      <View style={[styles.panelDivider, { backgroundColor: colors.separator }]} />
+      <Text style={[typography.body, styles.panelNote, { color: colors.secondaryLabel }]}>
+        How sign-in works: enter your number, then the 6-digit code on the next screen. Codes
+        expire after 5 minutes, and you can request a new one any time.
+      </Text>
+    </>
+  );
+
   return (
-    <Screen>
-      <DriftingBlobs />
-      <ScrollView
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={[styles.scroll, isWide && styles.scrollWide]}
-      >
-        <View style={[styles.inner, isWide && styles.innerWide]}>
+    <AuthLayout
+      panel={panel}
+      form={
+        <>
           {/* Hero */}
           <Entrance delay={0}>
             <View style={styles.heroIconWrap}>
@@ -77,28 +88,38 @@ export function LoginScreen({ navigation }: Props) {
 
           {/* Title */}
           <Entrance delay={120}>
-            <Text style={[typography.largeTitle2, styles.appName, { color: colors.label }]}>
+            <Text
+              accessibilityRole="header"
+              style={[typography.largeTitle2, styles.appName, { color: colors.label }]}
+            >
               MiniLedger
             </Text>
             <Text style={[typography.body, styles.tagline, { color: colors.secondaryLabel }]}>
-              Track what you've lent — see who owes you and what's overdue.
+              Track what you&apos;ve lent — see who owes you and what&apos;s overdue.
             </Text>
           </Entrance>
 
-          {/* Phone field */}
+          {/* Phone field: visible label (not placeholder-only) + explicit
+              country-code selector + national number. The card border turns
+              emerald while the input is focused — that is the focus ring. */}
           <Entrance delay={240}>
-            <GlassFieldCard>
+            <Text style={[typography.subhead, styles.fieldLabel, { color: colors.secondaryLabel }]}>
+              Phone number
+            </Text>
+            <GlassFieldCard focused={phoneFocused}>
               <View style={styles.fieldRow}>
-                <AppIcon symbol="phone.fill" ionicon="call" size={20} color={colors.tint} />
+                <CountryCodePicker code={countryCode} onChange={setCountryCode} />
                 <TextInput
-                  value={phone}
+                  value={national}
                   onChangeText={(text) => {
-                    setPhone(text);
+                    setNational(text);
                     if (phoneError) setPhoneError(null);
                   }}
-                  accessibilityLabel="Phone number"
-                  placeholder="+91 98765 43210"
-                  placeholderTextColor={colors.tertiaryLabel}
+                  onFocus={() => setPhoneFocused(true)}
+                  onBlur={() => setPhoneFocused(false)}
+                  accessibilityLabel="Phone number without country code"
+                  placeholder="98765 43210"
+                  placeholderTextColor={colors.secondaryLabel}
                   keyboardType="phone-pad"
                   autoComplete="tel"
                   textContentType="telephoneNumber"
@@ -118,7 +139,7 @@ export function LoginScreen({ navigation }: Props) {
               ) : null}
             </GlassFieldCard>
             <Text style={[typography.footnote, styles.note, { color: colors.secondaryLabel }]}>
-              Enter any phone number — a demo code will appear on the next screen.
+              You&apos;ll enter a 6-digit code on the next screen.
             </Text>
           </Entrance>
 
@@ -133,30 +154,13 @@ export function LoginScreen({ navigation }: Props) {
               />
             </View>
           </Entrance>
-        </View>
-      </ScrollView>
-    </Screen>
+        </>
+      }
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: sectionInset,
-    paddingVertical: spacing.xxl,
-  },
-  scrollWide: {
-    justifyContent: 'center',
-  },
-  inner: {
-    width: '100%',
-    maxWidth: 440,
-    alignSelf: 'center',
-    gap: spacing.sm,
-  },
-  innerWide: {
-    // Already constrained by maxWidth
-  },
   heroIconWrap: {
     alignItems: 'center',
     marginBottom: spacing.lg,
@@ -190,6 +194,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     lineHeight: 22,
   },
+  fieldLabel: {
+    marginBottom: spacing.xs,
+    marginLeft: spacing.xs,
+  },
   fieldRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -211,5 +219,12 @@ const styles = StyleSheet.create({
   },
   buttonWrap: {
     marginTop: spacing.lg,
+  },
+  panelDivider: {
+    height: 1,
+    marginVertical: spacing.sm,
+  },
+  panelNote: {
+    lineHeight: 21,
   },
 });

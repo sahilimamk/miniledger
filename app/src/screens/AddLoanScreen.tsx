@@ -3,7 +3,6 @@ import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import { useLayoutEffect, useState } from 'react';
 import {
-  Alert,
   Image,
   Pressable,
   ScrollView,
@@ -67,10 +66,13 @@ export function AddLoanScreen({ navigation }: Props) {
   async function pickPhoto() {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert(
-        'Photo access needed',
-        'Allow photo library access to attach a receipt, or skip the receipt.',
-      );
+      // Toast, not Alert: Alert.alert is unimplemented on web and silently
+      // does nothing there, which used to leave the user with no feedback.
+      toast.show({
+        variant: 'error',
+        title: 'Photo access needed',
+        message: 'Allow photo library access to attach a receipt, or skip the receipt.',
+      });
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -126,9 +128,16 @@ export function AddLoanScreen({ navigation }: Props) {
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
       if (receiptFailed) {
-        Alert.alert('Loan saved', 'The loan was saved, but the receipt photo could not be uploaded.', [
-          { text: 'OK', onPress: () => navigation.goBack() },
-        ]);
+        // Toast + unconditional navigation: the old Alert.alert path only
+        // navigated back from the alert's OK button, and Alert is a no-op
+        // on web — so a saved loan stranded the user on this screen with
+        // no feedback and an inviting duplicate Save. The toast host sits
+        // above the navigator, so it survives the goBack.
+        toast.show({
+          title: 'Loan saved',
+          message: 'The loan was saved, but the receipt photo could not be uploaded.',
+        });
+        navigation.goBack();
       } else {
         toast.show({
           title: 'Loan saved',
@@ -167,7 +176,7 @@ export function AddLoanScreen({ navigation }: Props) {
             value={friendPhone}
             onChangeText={setFriendPhone}
             error={errors.friendPhone}
-            placeholder="98100 12345 — optional, for reminders"
+            placeholder="98100 12345 — optional"
             keyboardType="phone-pad"
             autoCapitalize="none"
             autoCorrect={false}
@@ -209,6 +218,7 @@ export function AddLoanScreen({ navigation }: Props) {
                 accessibilityLabel="Remove receipt photo"
                 hitSlop={8}
                 onPress={() => setPhotoUri(null)}
+                style={styles.removeButton}
               >
                 <Text style={[typography.body, { color: colors.systemRed }]}>Remove</Text>
               </Pressable>
@@ -225,8 +235,8 @@ export function AddLoanScreen({ navigation }: Props) {
               ]}
             >
               <AppIcon symbol="photo.on.rectangle.angled" ionicon="image-outline" size={20} color={colors.tint} />
-              <Text style={[typography.body, styles.dropzoneLabel, { color: colors.tint }]}>Attach receipt</Text>
-              <Text style={[typography.footnote, { color: colors.tertiaryLabel }]}>Photo · up to 5 MB</Text>
+              <Text style={[typography.body, styles.dropzoneLabel, { color: colors.tintText }]}>Attach receipt</Text>
+              <Text style={[typography.footnote, { color: colors.secondaryLabel }]}>Photo · up to 5 MB</Text>
             </Pressable>
           )}
         </GroupedSection>
@@ -279,6 +289,10 @@ const styles = StyleSheet.create({
   },
   photoLabel: {
     flex: 1,
+  },
+  removeButton: {
+    minHeight: 44,
+    justifyContent: 'center',
   },
   thumbnail: {
     width: 44,

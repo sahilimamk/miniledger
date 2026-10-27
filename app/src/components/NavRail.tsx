@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useAuth } from '../auth/AuthContext';
@@ -25,6 +26,7 @@ interface RailItemProps {
 
 function RailItem({ label, symbol, ionicon, isActive, onPress }: RailItemProps) {
   const { colors } = useTheme();
+  const [focused, setFocused] = useState(false);
   const tint = isActive ? colors.tint : colors.secondaryLabel;
   return (
     <Pressable
@@ -32,10 +34,18 @@ function RailItem({ label, symbol, ionicon, isActive, onPress }: RailItemProps) 
       accessibilityLabel={label}
       accessibilityState={{ selected: isActive }}
       onPress={onPress}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
       style={({ pressed }) => [
         styles.item,
         isActive && { backgroundColor: `${colors.tint}24` },
         pressed && styles.pressed,
+        focused && {
+          outlineStyle: 'solid',
+          outlineWidth: 2,
+          outlineColor: colors.tintText,
+          outlineOffset: 2,
+        },
       ]}
     >
       <AppIcon symbol={symbol} ionicon={ionicon} size={19} color={tint} />
@@ -64,6 +74,7 @@ function RailItem({ label, symbol, ionicon, isActive, onPress }: RailItemProps) 
 export function NavRail({ active, onNavigate }: NavRailProps) {
   const { colors } = useTheme();
   const { user, logout } = useAuth();
+  const [logoutFocused, setLogoutFocused] = useState(false);
 
   function confirmLogout() {
     confirmAction({
@@ -119,7 +130,7 @@ export function NavRail({ active, onNavigate }: NavRailProps) {
       <View style={styles.spacer} />
 
       {user ? (
-        <Text style={[typography.footnote, styles.account, { color: colors.tertiaryLabel }]}>
+        <Text style={[typography.footnote, styles.account, { color: colors.secondaryLabel }]}>
           Signed in as {user.phone}
         </Text>
       ) : null}
@@ -127,7 +138,18 @@ export function NavRail({ active, onNavigate }: NavRailProps) {
         accessibilityRole="button"
         accessibilityLabel="Log out"
         onPress={confirmLogout}
-        style={({ pressed }) => [styles.item, pressed && styles.pressed]}
+        onFocus={() => setLogoutFocused(true)}
+        onBlur={() => setLogoutFocused(false)}
+        style={({ pressed }) => [
+          styles.item,
+          pressed && styles.pressed,
+          logoutFocused && {
+            outlineStyle: 'solid',
+            outlineWidth: 2,
+            outlineColor: colors.tintText,
+            outlineOffset: 2,
+          },
+        ]}
       >
         <AppIcon
           symbol="rectangle.portrait.and.arrow.right"
@@ -175,6 +197,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm + 2,
+    minHeight: 44,
     borderRadius: 12,
   },
   itemLabel: {

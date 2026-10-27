@@ -18,6 +18,46 @@ export function normalizePhone(raw: string): string {
   return raw.replace(/[\s-]/g, '');
 }
 
+/**
+ * Builds the full E.164-style number from a selected country code and the
+ * national part typed by the user. A typed leading "+" wins outright (the
+ * user pasted a complete international number); otherwise the trunk zeros
+ * are dropped, since the country code replaces them.
+ * If the user typed the country code as part of the number (e.g. +91 +
+ * '919999000111'), the duplicated prefix is dropped — but only when the
+ * remainder is a plausible national length (>= 9 digits), so a genuine
+ * national number that merely starts with the same digits (e.g. a 10-digit
+ * +91 number starting '91…', remainder 8) is kept exactly as typed.
+ * e.g. buildFullPhone('+91', '098765 43210') -> '+919876543210'.
+ * e.g. buildFullPhone('+91', '919999000111') -> '+919999000111'.
+ */
+export function buildFullPhone(countryCode: string, national: string): string {
+  const trimmed = national.trim();
+  if (trimmed.startsWith('+')) {
+    return `+${trimmed.replace(/\D/g, '')}`;
+  }
+  const ccDigits = countryCode.replace(/\D/g, '');
+  let digits = trimmed.replace(/\D/g, '').replace(/^0+/, '');
+  if (ccDigits && digits.startsWith(ccDigits) && digits.length - ccDigits.length >= 9) {
+    digits = digits.slice(ccDigits.length);
+  }
+  return `${countryCode}${digits}`;
+}
+
+/**
+ * Masks a phone for display: keeps the country code (when the number is
+ * longer than 10 digits) and the last 4 digits, bullets the rest.
+ * e.g. +919999000111 -> "+91 ••••••0111".
+ */
+export function maskPhone(raw: string): string {
+  const digits = raw.replace(/\D/g, '');
+  if (digits.length <= 4) return raw;
+  const last4 = digits.slice(-4);
+  const national = digits.length > 10 ? digits.slice(-10) : digits;
+  const cc = digits.length > 10 ? `+${digits.slice(0, -10)} ` : '';
+  return `${cc}${'•'.repeat(Math.max(0, national.length - 4))}${last4}`;
+}
+
 /** Contract: exactly 6 digits. */
 export function validateOtpCode(raw: string): string | null {
   const code = raw.trim();

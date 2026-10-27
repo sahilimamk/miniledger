@@ -59,8 +59,11 @@ Every file has one job. To change a behaviour, edit the one file listed for it.
 | `src/api/loans.ts` | Loan calls: list, create, edit, repay, delete, receipt upload, summary. |
 | `src/auth/AuthContext.tsx` | Login state for the whole app; restores the session on launch. |
 | `src/auth/storage.ts` | Saves the session token on the device. |
-| `src/screens/LoginScreen.tsx` | Phone number entry → sends OTP. |
-| `src/screens/OtpScreen.tsx` | Six digit boxes over one hidden input; auto-submits on the 6th digit; 60s resend countdown; errors as toasts. |
+| `src/screens/LoginScreen.tsx` | Phone number entry → sends OTP. Country-code selector (default +91) + national number, visible label, focus-ring card, desktop side panel via AuthLayout. |
+| `src/screens/OtpScreen.tsx` | Six digit boxes over one hidden input; auto-submits on the 6th digit; 60s resend countdown; invalid vs expired inline errors; masked number + edit-number action; demo banner ONLY when the server explicitly declared demo mode (legacy code-without-flag is discarded, never shown); desktop side panel via AuthLayout. |
+| `src/components/AuthLayout.tsx` | Shared auth shell: centered form on narrow screens; form + product-info side panel at ≥1024px. |
+| `src/components/CountryCodePicker.tsx` | Country-code selector (RN Modal list, no new dependency). |
+| `src/hooks/usePrefersReducedMotion.ts` | `prefers-reduced-motion` hook (web matchMedia; false on native). |
 | `src/components/SummaryCard.tsx` | Wallet-style hero card (phone): real LinearGradient, count-up outstanding amount, repaid progress bar, frosted "Next due" strip, icon stat row below. |
 | `src/components/Avatar.tsx` | Circular initials badge with a two-colour gradient pair hashed from the borrower's name. |
 | `src/components/CountUp.tsx` | Money figure that counts up (ease-out, rAF) — hero amounts on SummaryCard + desktop StatStrip. |
@@ -72,10 +75,10 @@ Every file has one job. To change a behaviour, edit the one file listed for it.
 | `src/screens/AddLoanScreen.tsx` | Add-a-loan form (friend, amount, due date, note, optional receipt photo). |
 | `src/screens/LoanDetailScreen.tsx` | One loan: details, receipt photo, Mark Repaid, Delete (with confirmation). |
 | `src/components/SummaryCard.tsx` | Wallet-style gradient hero card (phone): outstanding amount, repaid progress bar, icon stat row below. |
-| `src/components/LoanRow.tsx` | One loan row: initials avatar, name + due date, status dot, colour-coded amount; Reanimated cascade-in + press spring. |
+| `src/components/LoanRow.tsx` | One loan row: initials avatar, name + due date, status dot, colour-coded amount; Reanimated cascade-in + press spring; web keyboard focus ring (tintText outline). |
 | `src/components/Avatar.tsx` | Circular initials badge; colour hashed from the borrower's name. |
 | `src/components/Entrance.tsx` | One-shot entrance wrapper on Reanimated (FadeInDown spring, stagger via delay). |
-| `src/components/Toast.tsx` | Burnt-style toast system: ToastProvider + useToast().show() — top pill, icon badge, auto-dismiss; host sits above the navigator. Success (2.6s) + error variant (red, 5s, tap to dismiss) for form/action errors; blocking choices stay on Alert, load failures keep the retry banner. |
+| `src/components/Toast.tsx` | Burnt-style toast system: ToastProvider + useToast().show() — top pill, icon badge, auto-dismiss; host sits above the navigator. Success (2.6s) + error variant (red, 5s, tap to dismiss) for form/action errors; blocking choices stay on Alert, load failures keep the retry banner. Toast text is a polite live region so screen readers announce it. |
 | `src/components/GlassFieldCard.tsx` | Auth field card with real glassmorphism: expo-blur frosts the gradient blobs through a translucent wash. |
 | `src/components/GroupedSection.tsx` | The iOS inset-grouped card container used everywhere. |
 | `src/components/Screen.tsx` | Page wrapper: safe areas + grouped background. Narrow: centered column (680px forms/auth, 1080px dashboard). ≥900px with a `nav` prop: app shell — NavRail on the left, content centered beside it (stack header hides). |
@@ -84,11 +87,11 @@ Every file has one job. To change a behaviour, edit the one file listed for it.
 | `src/utils/confirm.ts` | `confirmAction` (v11): cross-platform confirm dialog — Alert on native, `window.confirm` on web (RN Alert is a no-op on web; this is why Log out/Delete appeared dead). |
 | `src/hooks/useMainNav.ts` | `mainNav(navigation, active)` (v11): shared rail wiring for the main screens — Overview/Loans/Add are real routes. |
 | `src/hooks/useIsWide.ts` | Desktop breakpoint hook (≥1024px) that switches layouts; below it nothing changes. |
-| `src/components/NavRail.tsx` | App-shell rail (≥900px): gradient brand, Overview / Loans / Add Loan destinations (active item gets a tint accent tick, v11), signed-in phone + Log out at the bottom (confirm via `utils/confirm.ts`). |
+| `src/components/NavRail.tsx` | App-shell rail (≥900px): gradient brand, Overview / Loans / Add Loan destinations (active item gets a tint accent tick, v11), signed-in phone + Log out at the bottom (confirm via `utils/confirm.ts`). Rail items are 44px targets with web keyboard focus rings; account line uses the readable secondary label. |
 | `src/hooks/useRailLayout.ts` | Rail breakpoint hook (≥900px) — the shell breakpoint, below the 1024px dashboard breakpoint. |
 | `src/theme/elevation.ts` | Shared card shadows: `cardShadow` (v11 retune: 0/4/14, 0.38 dark) + `prominentShadow` for hero/alert cards. |
 | `src/theme/scrollbar.ts` | Web-only global scrollbar theme (v12): injects one stylesheet from App.tsx — 8px thin, transparent track, muted violet-grey thumb #4E4A6B (hover #665F8C), rounded; webkit pseudo-elements + Firefox scrollbar-width/color. No-op on native. |
-| `src/components/TextField.tsx` | Form field: stacked label over a filled well, optional leading icon (v9), inline error under. |
+| `src/components/TextField.tsx` | Form field: stacked label over a filled well, optional leading icon (v9), inline error under. Focus turns the border emerald; placeholder uses the readable secondary label. |
 | `src/components/PrimaryButton.tsx` | The main button (and destructive variant). |
 | `src/components/EmptyState.tsx` | "No loans yet" style placeholder. |
 | `src/components/LoadingView.tsx` | Full-screen spinner. |

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { AppIcon } from './AppIcon';
@@ -13,6 +14,7 @@ interface ErrorBannerProps {
 /** Inline error strip shown above content when a request fails. */
 export function ErrorBanner({ message, onRetry }: ErrorBannerProps) {
   const { colors } = useTheme();
+  const [retryFocused, setRetryFocused] = useState(false);
 
   return (
     <View
@@ -31,9 +33,20 @@ export function ErrorBanner({ message, onRetry }: ErrorBannerProps) {
           accessibilityRole="button"
           accessibilityLabel="Retry"
           onPress={onRetry}
+          onFocus={() => setRetryFocused(true)}
+          onBlur={() => setRetryFocused(false)}
           hitSlop={8}
+          style={[
+            styles.retry,
+            retryFocused && {
+              outlineStyle: 'solid',
+              outlineWidth: 2,
+              outlineColor: colors.tintText,
+              outlineOffset: 2,
+            },
+          ]}
         >
-          <Text style={[typography.headline, { color: colors.tint }]}>Retry</Text>
+          <Text style={[typography.headline, { color: colors.tintText }]}>Retry</Text>
         </Pressable>
       ) : null}
     </View>
@@ -53,5 +66,9 @@ const styles = StyleSheet.create({
   },
   message: {
     flex: 1,
+  },
+  retry: {
+    minHeight: 44,
+    justifyContent: 'center',
   },
 });

@@ -80,6 +80,10 @@ export function LoanDetailScreen({ route, navigation }: Props) {
   const [editingPhone, setEditingPhone] = useState(false);
   const [phoneDraft, setPhoneDraft] = useState('');
   const [savingPhone, setSavingPhone] = useState(false);
+  // Which action link has keyboard focus (delete/add-phone/cancel/save),
+  // for the web focus ring.
+  const [actionFocused, setActionFocused] = useState<string | null>(null);
+  const [phoneFocused, setPhoneFocused] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -292,10 +296,23 @@ export function LoanDetailScreen({ route, navigation }: Props) {
                   accessibilityRole="button"
                   accessibilityLabel={`Remind ${loan.friendName} on WhatsApp`}
                   onPress={handleRemind}
-                  style={({ pressed }) => [styles.remindButton, pressed && styles.pressed]}
+                  onFocus={() => setActionFocused('whatsapp')}
+                  onBlur={() => setActionFocused(null)}
+                  style={({ pressed }) => [
+                    styles.remindButton,
+                    pressed && styles.pressed,
+                    actionFocused === 'whatsapp' && {
+                      outlineStyle: 'solid',
+                      outlineWidth: 2,
+                      outlineColor: colors.tintText,
+                      outlineOffset: 2,
+                    },
+                  ]}
                 >
-                  <AppIcon symbol="message.fill" ionicon="logo-whatsapp" size={19} color="#128C7E" />
-                  <Text style={[typography.headline, { color: '#128C7E' }]}>
+                  {/* WhatsApp green #128C7E is 4.14:1 on white (fails AA);
+                      tintText (6.22:1) keeps the green family readable. */}
+                  <AppIcon symbol="message.fill" ionicon="logo-whatsapp" size={19} color={colors.tintText} />
+                  <Text style={[typography.headline, { color: colors.tintText }]}>
                     Remind on WhatsApp
                   </Text>
                 </Pressable>
@@ -315,17 +332,22 @@ export function LoanDetailScreen({ route, navigation }: Props) {
                       value={phoneDraft}
                       onChangeText={setPhoneDraft}
                       placeholder="Friend's phone — 98100 12345"
-                      placeholderTextColor={colors.tertiaryLabel}
+                      placeholderTextColor={colors.secondaryLabel}
                       keyboardType="phone-pad"
                       autoCapitalize="none"
                       autoCorrect={false}
                       accessibilityLabel="Friend's phone number"
+                      onFocus={() => setPhoneFocused(true)}
+                      onBlur={() => setPhoneFocused(false)}
                       style={[
                         typography.body,
                         styles.phoneInput,
                         {
                           backgroundColor: colors.secondarySystemBackground,
-                          borderColor: colors.separator,
+                          // Emerald focus border, same as TextField — the
+                          // old style had outlineWidth 0 and no focus
+                          // change at all, so the field looked unfocused.
+                          borderColor: phoneFocused ? colors.tint : colors.separator,
                           color: colors.label,
                         },
                       ]}
@@ -339,6 +361,17 @@ export function LoanDetailScreen({ route, navigation }: Props) {
                           setEditingPhone(false);
                           setPhoneDraft('');
                         }}
+                        onFocus={() => setActionFocused('cancel')}
+                        onBlur={() => setActionFocused(null)}
+                        style={[
+                          styles.phoneAction,
+                          actionFocused === 'cancel' && {
+                            outlineStyle: 'solid',
+                            outlineWidth: 2,
+                            outlineColor: colors.tintText,
+                            outlineOffset: 2,
+                          },
+                        ]}
                       >
                         <Text style={[typography.subhead, { color: colors.secondaryLabel }]}>
                           Cancel
@@ -350,11 +383,22 @@ export function LoanDetailScreen({ route, navigation }: Props) {
                         hitSlop={8}
                         disabled={savingPhone}
                         onPress={handleSavePhone}
+                        onFocus={() => setActionFocused('save')}
+                        onBlur={() => setActionFocused(null)}
+                        style={[
+                          styles.phoneAction,
+                          actionFocused === 'save' && {
+                            outlineStyle: 'solid',
+                            outlineWidth: 2,
+                            outlineColor: colors.tintText,
+                            outlineOffset: 2,
+                          },
+                        ]}
                       >
                         {savingPhone ? (
                           <ActivityIndicator color={colors.tint} />
                         ) : (
-                          <Text style={[typography.subhead, styles.savePhoneText, { color: colors.tint }]}>
+                          <Text style={[typography.subhead, styles.savePhoneText, { color: colors.tintText }]}>
                             Save phone
                           </Text>
                         )}
@@ -367,9 +411,19 @@ export function LoanDetailScreen({ route, navigation }: Props) {
                     accessibilityLabel="Add a phone number for reminders"
                     onPress={() => setEditingPhone(true)}
                     hitSlop={8}
-                    style={styles.deleteLink}
+                    onFocus={() => setActionFocused('addphone')}
+                    onBlur={() => setActionFocused(null)}
+                    style={[
+                      styles.deleteLink,
+                      actionFocused === 'addphone' && {
+                        outlineStyle: 'solid',
+                        outlineWidth: 2,
+                        outlineColor: colors.tintText,
+                        outlineOffset: 2,
+                      },
+                    ]}
                   >
-                    <Text style={[typography.subhead, { color: colors.tint }]}>
+                    <Text style={[typography.subhead, { color: colors.tintText }]}>
                       Add a phone number for reminders
                     </Text>
                   </Pressable>
@@ -381,7 +435,17 @@ export function LoanDetailScreen({ route, navigation }: Props) {
                 onPress={handleDelete}
                 disabled={busy !== null}
                 hitSlop={8}
-                style={styles.deleteLink}
+                onFocus={() => setActionFocused('delete')}
+                onBlur={() => setActionFocused(null)}
+                style={[
+                  styles.deleteLink,
+                  actionFocused === 'delete' && {
+                    outlineStyle: 'solid',
+                    outlineWidth: 2,
+                    outlineColor: colors.tintText,
+                    outlineOffset: 2,
+                  },
+                ]}
               >
                 {busy === 'delete' ? (
                   <ActivityIndicator color={colors.systemRed} />
@@ -467,6 +531,8 @@ const styles = StyleSheet.create({
   },
   deleteLink: {
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 44,
     paddingVertical: spacing.sm,
   },
   remindButton: {
@@ -502,6 +568,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: spacing.xs,
+  },
+  phoneAction: {
+    minHeight: 44,
+    justifyContent: 'center',
   },
   savePhoneText: {
     fontFamily: 'Inter_600SemiBold',

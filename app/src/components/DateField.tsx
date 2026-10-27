@@ -38,6 +38,10 @@ interface DateFieldProps {
 export function DateField({ label, value, onChange, error }: DateFieldProps) {
   const { colors } = useTheme();
   const [open, setOpen] = useState(false);
+  const [triggerFocused, setTriggerFocused] = useState(false);
+  // Which modal control has keyboard focus (prev/next/day/clear/today),
+  // for the web focus ring. One state keeps every control consistent.
+  const [modalFocus, setModalFocus] = useState<string | null>(null);
   const now = new Date();
   const parsed = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
   const sel = parsed
@@ -77,11 +81,20 @@ export function DateField({ label, value, onChange, error }: DateFieldProps) {
         accessibilityRole="button"
         accessibilityLabel={label}
         onPress={openPicker}
+        onFocus={() => setTriggerFocused(true)}
+        onBlur={() => setTriggerFocused(false)}
         style={[
           styles.field,
           {
             backgroundColor: colors.secondarySystemBackground,
             borderColor: error ? colors.systemRed : colors.separator,
+          },
+          // Web keyboard focus ring (same pattern as PrimaryButton).
+          triggerFocused && {
+            outlineStyle: 'solid',
+            outlineWidth: 2,
+            outlineColor: colors.tintText,
+            outlineOffset: 2,
           },
         ]}
       >
@@ -89,7 +102,7 @@ export function DateField({ label, value, onChange, error }: DateFieldProps) {
         <Text
           style={[
             typography.body,
-            { color: value ? colors.label : colors.tertiaryLabel },
+            { color: value ? colors.label : colors.secondaryLabel },
           ]}
         >
           {value ? formatDate(value) : 'Pick a date'}
@@ -105,8 +118,20 @@ export function DateField({ label, value, onChange, error }: DateFieldProps) {
       ) : null}
 
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-        <Pressable style={styles.backdrop} onPress={() => setOpen(false)}>
+        <View style={styles.backdrop}>
+          {/* Dismiss layer is a SIBLING behind the sheet (same pattern as
+              CountryCodePicker): taps inside the sheet never bubble into
+              a close — the old nested-Pressable version closed the modal
+              whenever prev/next month was tapped. Not focusable, so
+              keyboard users tab straight to the sheet controls. */}
           <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Close date picker"
+            focusable={false}
+            onPress={() => setOpen(false)}
+            style={StyleSheet.absoluteFill}
+          />
+          <View
             style={[
               styles.sheet,
               {
@@ -114,7 +139,6 @@ export function DateField({ label, value, onChange, error }: DateFieldProps) {
                 borderColor: colors.separator,
               },
             ]}
-            onPress={() => undefined}
           >
             <View style={styles.sheetHead}>
               <Pressable
@@ -122,6 +146,17 @@ export function DateField({ label, value, onChange, error }: DateFieldProps) {
                 accessibilityLabel="Previous month"
                 hitSlop={10}
                 onPress={() => shiftMonth(-1)}
+                onFocus={() => setModalFocus('prev')}
+                onBlur={() => setModalFocus(null)}
+                style={[
+                  styles.monthNav,
+                  modalFocus === 'prev' && {
+                    outlineStyle: 'solid',
+                    outlineWidth: 2,
+                    outlineColor: colors.tintText,
+                    outlineOffset: 2,
+                  },
+                ]}
               >
                 <AppIcon symbol="chevron.left" ionicon="chevron-back" size={20} color={colors.label} />
               </Pressable>
@@ -133,6 +168,17 @@ export function DateField({ label, value, onChange, error }: DateFieldProps) {
                 accessibilityLabel="Next month"
                 hitSlop={10}
                 onPress={() => shiftMonth(1)}
+                onFocus={() => setModalFocus('next')}
+                onBlur={() => setModalFocus(null)}
+                style={[
+                  styles.monthNav,
+                  modalFocus === 'next' && {
+                    outlineStyle: 'solid',
+                    outlineWidth: 2,
+                    outlineColor: colors.tintText,
+                    outlineOffset: 2,
+                  },
+                ]}
               >
                 <AppIcon
                   symbol="chevron.right"
@@ -147,7 +193,7 @@ export function DateField({ label, value, onChange, error }: DateFieldProps) {
               {WEEKDAYS.map((d) => (
                 <Text
                   key={d}
-                  style={[typography.caption, styles.weekDay, { color: colors.tertiaryLabel }]}
+                  style={[typography.caption, styles.weekDay, { color: colors.secondaryLabel }]}
                 >
                   {d}
                 </Text>
@@ -165,14 +211,25 @@ export function DateField({ label, value, onChange, error }: DateFieldProps) {
                     key={iso}
                     accessibilityRole="button"
                     accessibilityLabel={formatDate(iso)}
-                    style={styles.cell}
+                    hitSlop={4}
                     onPress={() => {
                       onChange(iso);
                       setOpen(false);
                     }}
+                    onFocus={() => setModalFocus(iso)}
+                    onBlur={() => setModalFocus(null)}
+                    style={[
+                      styles.cell,
+                      modalFocus === iso && {
+                        outlineStyle: 'solid',
+                        outlineWidth: 2,
+                        outlineColor: colors.tintText,
+                        outlineOffset: 2,
+                      },
+                    ]}
                   >
                     {isSel ? (
-                      <View style={[styles.dayCircle, { backgroundColor: colors.tint }]}>
+                      <View style={[styles.dayCircle, { backgroundColor: colors.tintText }]}>
                         <Text style={[styles.dayText, { color: '#FFFFFF', fontFamily: font.bold }]}>
                           {day}
                         </Text>
@@ -201,6 +258,17 @@ export function DateField({ label, value, onChange, error }: DateFieldProps) {
                   onChange('');
                   setOpen(false);
                 }}
+                onFocus={() => setModalFocus('clear')}
+                onBlur={() => setModalFocus(null)}
+                style={[
+                  styles.sheetFootButton,
+                  modalFocus === 'clear' && {
+                    outlineStyle: 'solid',
+                    outlineWidth: 2,
+                    outlineColor: colors.tintText,
+                    outlineOffset: 2,
+                  },
+                ]}
               >
                 <Text style={[typography.subhead, { color: colors.systemRed }]}>Clear</Text>
               </Pressable>
@@ -212,12 +280,23 @@ export function DateField({ label, value, onChange, error }: DateFieldProps) {
                   onChange(todayIso);
                   setOpen(false);
                 }}
+                onFocus={() => setModalFocus('today')}
+                onBlur={() => setModalFocus(null)}
+                style={[
+                  styles.sheetFootButton,
+                  modalFocus === 'today' && {
+                    outlineStyle: 'solid',
+                    outlineWidth: 2,
+                    outlineColor: colors.tintText,
+                    outlineOffset: 2,
+                  },
+                ]}
               >
-                <Text style={[typography.subhead, { color: colors.tint }]}>Today</Text>
+                <Text style={[typography.subhead, { color: colors.tintText }]}>Today</Text>
               </Pressable>
             </View>
-          </Pressable>
-        </Pressable>
+          </View>
+        </View>
       </Modal>
     </View>
   );
@@ -267,6 +346,13 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     paddingHorizontal: spacing.xs,
   },
+  monthNav: {
+    minHeight: 44,
+    minWidth: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 10,
+  },
   weekRow: {
     flexDirection: 'row',
     marginBottom: spacing.xs,
@@ -300,5 +386,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: spacing.md,
     paddingHorizontal: spacing.xs,
+  },
+  sheetFootButton: {
+    minHeight: 44,
+    justifyContent: 'center',
   },
 });

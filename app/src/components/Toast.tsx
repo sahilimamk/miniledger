@@ -81,6 +81,7 @@ function ToastHost({
 }) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const [focused, setFocused] = useState(false);
 
   if (!toast) return null;
   const isError = toast.variant === 'error';
@@ -90,12 +91,23 @@ function ToastHost({
     <View style={[styles.host, { top: insets.top + spacing.sm }]}>
       <Pressable
         onPress={onDismiss}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
         accessibilityRole="button"
         accessibilityLabel={`${toast.title}. Tap to dismiss.`}
-        style={styles.pillPressable}
+        style={[
+          styles.pillPressable,
+          focused && {
+            outlineStyle: 'solid',
+            outlineWidth: 2,
+            outlineColor: colors.tintText,
+            outlineOffset: 2,
+          },
+        ]}
       >
         <Animated.View
           key={toast.id}
+          accessibilityLiveRegion="polite"
           entering={FadeInUp.springify().damping(17)}
           exiting={FadeOutUp}
           style={[

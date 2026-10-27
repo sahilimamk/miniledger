@@ -13,12 +13,33 @@ Overdue = pending AND due_date < today (server-local date).
 ## Auth (mock OTP)
 
 - `POST /auth/request-otp` body `{ "phone": "+919876543210" }`
-  → `200 { "ok": true }`. Server generates a 6-digit OTP, stores it in an
-  in-memory map with a 5-minute expiry, and prints it to the server log
-  (mock — no SMS). Phone must be 10–15 digits, optional leading `+`.
+  → `200 { "ok": true, "demo": false }` by default. Server generates a
+  6-digit OTP, stores it in an in-memory map with a 5-minute expiry.
+  Phone must be 10–15 digits, optional leading `+`.
+  Demo gate: ONLY when the server runs with `DEMO_AUTH=true` does the
+  response also carry the code (`{ "ok": true, "code": "123456",
+  "demo": true }`) and the server log print it, so the client can show it
+  on screen labelled DEMO. With the flag off the code is never returned,
+  logged, or rendered — a real code channel (SMS provider) is then
+  required to sign in. The current Render deployment sets `DEMO_AUTH=true`
+  (see render.yaml) because no SMS provider is wired yet; that is an
+  explicit opt-in, and it must be set to 'false' (with a real SMS
+  provider wired) before this is treated as production auth.
+  Client rule (strict, enforced in `app/src/api/auth.ts`): a code is
+  shown ONLY when the server explicitly declared `demo: true`. A legacy
+  response carrying a `code` with no demo flag is NOT proof of demo mode
+  — the client discards its code on receipt, never stores, renders, or
+  logs it, and treats the response as non-demo. Hiding the banner in the
+  UI is not the security mechanism; the code never reaches a screen
+  unless demo mode was explicit. Consequence: a preview frontend talking
+  to an old server (code, no flag) shows no code, even though the server
+  sent one — that is the secure behavior, and sign-in there needs a
+  demo-on server build.
 - `POST /auth/verify-otp` body `{ "phone": "...", "code": "123456" }`
   → `200 { "token": "<jwt>", "user": { "id": "<uuid>", "phone": "..." } }`.
-  User row is created on first verify. Wrong/expired code → `401`.
+  User row is created on first verify. Wrong code → `401 "invalid code"`;
+  expired code → `401 "code expired"`; no code requested → `401
+  "invalid or expired code"`.
 - All routes below require header `Authorization: Bearer <token>`.
   Missing/invalid token → `401 { "error": "unauthorized" }`.
 
