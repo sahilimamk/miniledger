@@ -57,7 +57,7 @@ export function LoansScreen({ navigation }: Props) {
     transform: [{ scale: fabScale.value }],
   }));
   // The pulsing ring is decorative motion: under prefers-reduced-motion it
-  // is omitted entirely (Entrance/DriftingBlobs already honor the same).
+  // is omitted entirely (Entrance already honors the same).
   const reduceMotion = usePrefersReducedMotion();
   const fabPulse = useSharedValue(0);
   useEffect(() => {

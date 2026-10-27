@@ -9,7 +9,7 @@ import { useAuth } from '../auth/AuthContext';
 import { AppIcon } from '../components/AppIcon';
 import { AuthLayout, AuthPanelBullet, AuthPanelTitle } from '../components/AuthLayout';
 import { Entrance } from '../components/Entrance';
-import { GlassFieldCard } from '../components/GlassFieldCard';
+import { FieldCard } from '../components/FieldCard';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { useToast } from '../components/Toast';
 import type { AuthStackParamList } from '../navigation/types';
@@ -151,11 +151,6 @@ export function OtpScreen({ route, navigation }: Props) {
       <AuthPanelBullet>6 digits, expires after 5 minutes.</AuthPanelBullet>
       <AuthPanelBullet>Wrong code? Check the digits and try again.</AuthPanelBullet>
       <AuthPanelBullet>Need a new one? Tap Resend below.</AuthPanelBullet>
-      {showDemoCode ? (
-        <Text style={[typography.body, styles.panelDemoNote, { color: colors.tintText }]}>
-          Demo mode: your code is shown on this screen for testing only.
-        </Text>
-      ) : null}
     </>
   );
 
@@ -255,7 +250,7 @@ export function OtpScreen({ route, navigation }: Props) {
 
           {/* Code boxes */}
           <Entrance delay={200}>
-            <GlassFieldCard>
+            <FieldCard>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Code entry"
@@ -282,9 +277,7 @@ export function OtpScreen({ route, navigation }: Props) {
                       style={[
                         styles.box,
                         {
-                          backgroundColor: active
-                            ? `${colors.tint}1A`
-                            : colors.systemGroupedBackground,
+                          backgroundColor: colors.secondarySystemGroupedBackground,
                           borderColor: filled || active ? colors.tint : colors.separator,
                         },
                       ]}
@@ -326,7 +319,7 @@ export function OtpScreen({ route, navigation }: Props) {
                   {codeError}
                 </Text>
               ) : null}
-            </GlassFieldCard>
+            </FieldCard>
           </Entrance>
 
           {/* Verify button */}
@@ -516,9 +509,5 @@ const styles = StyleSheet.create({
   },
   resendText: {
     fontWeight: '600',
-  },
-  panelDemoNote: {
-    lineHeight: 21,
-    marginTop: spacing.xs,
   },
 });
