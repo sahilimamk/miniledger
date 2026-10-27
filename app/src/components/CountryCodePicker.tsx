@@ -42,6 +42,9 @@ interface CountryCodePickerProps {
 export function CountryCodePicker({ code, onChange }: CountryCodePickerProps) {
   const { colors } = useTheme();
   const [open, setOpen] = useState(false);
+  const [triggerFocused, setTriggerFocused] = useState(false);
+  const [rowFocused, setRowFocused] = useState<string | null>(null);
+  const [cancelFocused, setCancelFocused] = useState(false);
   const selected = COUNTRY_CODES.find((c) => c.code === code);
 
   return (
@@ -50,9 +53,18 @@ export function CountryCodePicker({ code, onChange }: CountryCodePickerProps) {
         accessibilityRole="button"
         accessibilityLabel={`Country code, currently ${code}${selected ? ` ${selected.name}` : ''}. Tap to change.`}
         onPress={() => setOpen(true)}
+        onFocus={() => setTriggerFocused(true)}
+        onBlur={() => setTriggerFocused(false)}
         style={({ pressed }) => [
           styles.trigger,
           { borderColor: colors.separator, opacity: pressed ? 0.7 : 1 },
+          // Web keyboard focus ring (same pattern as PrimaryButton).
+          triggerFocused && {
+            outlineStyle: 'solid',
+            outlineWidth: 2,
+            outlineColor: colors.tintText,
+            outlineOffset: 2,
+          },
         ]}
       >
         <Text style={[typography.body, { color: colors.label }]}>{code}</Text>
@@ -88,9 +100,17 @@ export function CountryCodePicker({ code, onChange }: CountryCodePickerProps) {
                       onChange(c.code);
                       setOpen(false);
                     }}
+                    onFocus={() => setRowFocused(c.code)}
+                    onBlur={() => setRowFocused(null)}
                     style={[
                       styles.row,
                       { backgroundColor: active ? `${colors.tint}14` : 'transparent' },
+                      rowFocused === c.code && {
+                        outlineStyle: 'solid',
+                        outlineWidth: 2,
+                        outlineColor: colors.tintText,
+                        outlineOffset: 2,
+                      },
                     ]}
                   >
                     <Text style={[typography.body, { color: colors.label }]}>{c.name}</Text>
@@ -110,7 +130,18 @@ export function CountryCodePicker({ code, onChange }: CountryCodePickerProps) {
               accessibilityRole="button"
               accessibilityLabel="Close country code list"
               onPress={() => setOpen(false)}
-              style={[styles.cancel, { borderColor: colors.separator }]}
+              onFocus={() => setCancelFocused(true)}
+              onBlur={() => setCancelFocused(false)}
+              style={[
+                styles.cancel,
+                { borderColor: colors.separator },
+                cancelFocused && {
+                  outlineStyle: 'solid',
+                  outlineWidth: 2,
+                  outlineColor: colors.tintText,
+                  outlineOffset: 2,
+                },
+              ]}
             >
               <Text style={[typography.headline, { color: colors.tintText }]}>Cancel</Text>
             </Pressable>

@@ -36,6 +36,8 @@ export function OtpScreen({ route, navigation }: Props) {
   const [verifying, setVerifying] = useState(false);
   const [resending, setResending] = useState(false);
   const [boxesFocused, setBoxesFocused] = useState(false);
+  const [editFocused, setEditFocused] = useState(false);
+  const [resendFocused, setResendFocused] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(RESEND_SECONDS);
 
   useEffect(() => {
@@ -172,7 +174,17 @@ export function OtpScreen({ route, navigation }: Props) {
               accessibilityLabel="Use a different phone number"
               hitSlop={8}
               onPress={() => navigation.goBack()}
-              style={styles.editNumberWrap}
+              onFocus={() => setEditFocused(true)}
+              onBlur={() => setEditFocused(false)}
+              style={[
+                styles.editNumberWrap,
+                editFocused && {
+                  outlineStyle: 'solid',
+                  outlineWidth: 2,
+                  outlineColor: colors.tintText,
+                  outlineOffset: 2,
+                },
+              ]}
             >
               <Text style={[typography.subhead, styles.editNumberText, { color: colors.tintText }]}>
                 Use a different number
@@ -313,7 +325,17 @@ export function OtpScreen({ route, navigation }: Props) {
                   accessibilityLabel="Resend code"
                   hitSlop={8}
                   onPress={handleResend}
-                  style={styles.resendPressable}
+                  onFocus={() => setResendFocused(true)}
+                  onBlur={() => setResendFocused(false)}
+                  style={[
+                    styles.resendPressable,
+                    resendFocused && {
+                      outlineStyle: 'solid',
+                      outlineWidth: 2,
+                      outlineColor: colors.tintText,
+                      outlineOffset: 2,
+                    },
+                  ]}
                 >
                   <Text style={[typography.subhead, styles.resendText, { color: colors.tintText }]}>
                     Resend code
@@ -351,6 +373,7 @@ const styles = StyleSheet.create({
   },
   editNumberWrap: {
     alignItems: 'center',
+    alignSelf: 'center',
     marginBottom: spacing.lg,
     minHeight: 44,
     justifyContent: 'center',
