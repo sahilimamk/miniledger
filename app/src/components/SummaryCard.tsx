@@ -70,6 +70,8 @@ export function SummaryCard({ summary, nextDue }: SummaryCardProps) {
           <CountUp
             value={summary.outstanding}
             format={formatINR}
+            numberOfLines={1}
+            adjustsFontSizeToFit
             style={[typography.display, styles.heroAmount, { color: colors.label }]}
           />
           <View style={styles.progressTrack}>

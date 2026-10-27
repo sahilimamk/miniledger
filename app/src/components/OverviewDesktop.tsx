@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import type { Loan, Summary } from '../api/types';
@@ -44,6 +45,7 @@ export function SectionTitle({ children }: { children: string }) {
   const { colors } = useTheme();
   return (
     <Text
+      accessibilityRole="header"
       style={[
         typography.sectionHeader,
         styles.sectionTitle,
@@ -121,6 +123,9 @@ export function OverviewDesktop({
   onViewAllLoans,
 }: OverviewDesktopProps) {
   const { colors } = useTheme();
+  const [addFocused, setAddFocused] = useState(false);
+  const [firstFocused, setFirstFocused] = useState(false);
+  const [viewAllFocused, setViewAllFocused] = useState(false);
   const overdueLoans = loans.filter((loan) => loan.isOverdue);
   const recentLoans = loans.slice(0, 4);
   const nextDue =
@@ -131,14 +136,23 @@ export function OverviewDesktop({
   return (
     <ScrollView contentContainerStyle={styles.scroll}>
       <View style={styles.pageHead}>
-        <Text style={[typography.largeTitle, { color: colors.label }]}>Overview</Text>
+        <Text accessibilityRole="header" style={[typography.largeTitle, { color: colors.label }]}>Overview</Text>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Add loan"
           onPress={onAddLoan}
+          onFocus={() => setAddFocused(true)}
+          onBlur={() => setAddFocused(false)}
           style={({ pressed }) => [
             styles.addButton,
-            { backgroundColor: pressed ? colors.accentPressed : colors.tint },
+            // White on tintText is 6.22:1 (AA); the brighter tint was 4.06:1.
+            { backgroundColor: pressed ? colors.accentPressed : colors.tintText },
+            addFocused && {
+              outlineStyle: 'solid',
+              outlineWidth: 2,
+              outlineColor: colors.tintText,
+              outlineOffset: 2,
+            },
           ]}
         >
           <AppIcon symbol="plus" ionicon="add" size={16} color={colors.onTint} />
@@ -167,9 +181,17 @@ export function OverviewDesktop({
                 accessibilityRole="button"
                 accessibilityLabel="Add your first loan"
                 onPress={onAddLoan}
+                onFocus={() => setFirstFocused(true)}
+                onBlur={() => setFirstFocused(false)}
                 style={({ pressed }) => [
             styles.addButton,
-            { backgroundColor: pressed ? colors.accentPressed : colors.tint },
+            { backgroundColor: pressed ? colors.accentPressed : colors.tintText },
+            firstFocused && {
+              outlineStyle: 'solid',
+              outlineWidth: 2,
+              outlineColor: colors.tintText,
+              outlineOffset: 2,
+            },
           ]}
               >
                 <AppIcon symbol="plus" ionicon="add" size={16} color={colors.onTint} />
@@ -209,9 +231,20 @@ export function OverviewDesktop({
                 accessibilityRole="button"
                 accessibilityLabel="View all loans"
                 onPress={onViewAllLoans}
-                style={({ pressed }) => [styles.viewAll, pressed && styles.pressed]}
+                onFocus={() => setViewAllFocused(true)}
+                onBlur={() => setViewAllFocused(false)}
+                style={({ pressed }) => [
+                  styles.viewAll,
+                  pressed && styles.pressed,
+                  viewAllFocused && {
+                    outlineStyle: 'solid',
+                    outlineWidth: 2,
+                    outlineColor: colors.tintText,
+                    outlineOffset: 2,
+                  },
+                ]}
               >
-                <Text style={[typography.headline, { color: colors.tint }]}>
+                <Text style={[typography.headline, { color: colors.tintText }]}>
                   View all loans
                 </Text>
                 <AppIcon
@@ -297,7 +330,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-    height: 40,
+    minHeight: 44,
     paddingHorizontal: spacing.lg,
     borderRadius: 20,
     overflow: 'hidden',
@@ -354,6 +387,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
+    minHeight: 44,
+    justifyContent: 'center',
     marginTop: spacing.lg,
     marginLeft: sectionInset,
     alignSelf: 'flex-start',

@@ -23,14 +23,25 @@ export function normalizePhone(raw: string): string {
  * national part typed by the user. A typed leading "+" wins outright (the
  * user pasted a complete international number); otherwise the trunk zeros
  * are dropped, since the country code replaces them.
+ * If the user typed the country code as part of the number (e.g. +91 +
+ * '919999000111'), the duplicated prefix is dropped — but only when the
+ * remainder is a plausible national length (>= 9 digits), so a genuine
+ * national number that merely starts with the same digits (e.g. a 10-digit
+ * +91 number starting '91…', remainder 8) is kept exactly as typed.
  * e.g. buildFullPhone('+91', '098765 43210') -> '+919876543210'.
+ * e.g. buildFullPhone('+91', '919999000111') -> '+919999000111'.
  */
 export function buildFullPhone(countryCode: string, national: string): string {
   const trimmed = national.trim();
   if (trimmed.startsWith('+')) {
     return `+${trimmed.replace(/\D/g, '')}`;
   }
-  return `${countryCode}${trimmed.replace(/\D/g, '').replace(/^0+/, '')}`;
+  const ccDigits = countryCode.replace(/\D/g, '');
+  let digits = trimmed.replace(/\D/g, '').replace(/^0+/, '');
+  if (ccDigits && digits.startsWith(ccDigits) && digits.length - ccDigits.length >= 9) {
+    digits = digits.slice(ccDigits.length);
+  }
+  return `${countryCode}${digits}`;
 }
 
 /**

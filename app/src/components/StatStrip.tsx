@@ -107,6 +107,10 @@ function StatCard({
           <CountUp
             value={countUpTo}
             format={formatINR}
+            // Large figures must shrink rather than overflow the card at
+            // narrow desktop widths (1024px with the 232px rail).
+            numberOfLines={1}
+            adjustsFontSizeToFit
             style={[
               variant === 'hero' ? styles.heroValue : styles.value,
               { color: valueColor },

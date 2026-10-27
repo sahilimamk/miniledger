@@ -72,6 +72,7 @@ export function LoansScreen({ navigation }: Props) {
   const [loans, setLoans] = useState<Loan[] | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fabFocused, setFabFocused] = useState(false);
 
   const load = useCallback(async (isRefresh: boolean) => {
     if (isRefresh) setRefreshing(true);
@@ -117,7 +118,7 @@ export function LoansScreen({ navigation }: Props) {
             });
           }}
         >
-          <Text style={[typography.body, { color: colors.tint }]}>Log out</Text>
+          <Text style={[typography.body, { color: colors.tintText }]}>Log out</Text>
         </Pressable>
       ),
     });
@@ -233,6 +234,8 @@ export function LoansScreen({ navigation }: Props) {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
               navigation.navigate('AddLoan');
             }}
+            onFocus={() => setFabFocused(true)}
+            onBlur={() => setFabFocused(false)}
             onPressIn={() => {
               fabScale.value = withSpring(0.88, { damping: 13 });
             }}
@@ -243,6 +246,12 @@ export function LoansScreen({ navigation }: Props) {
               styles.fab,
               { backgroundColor: colors.tint },
               pressed && styles.fabPressed,
+              fabFocused && {
+                outlineStyle: 'solid',
+                outlineWidth: 2,
+                outlineColor: colors.tintText,
+                outlineOffset: 2,
+              },
             ]}
           >
             <AppIcon symbol="plus" ionicon="add" size={28} color={colors.onTint} />

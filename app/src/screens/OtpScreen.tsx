@@ -43,6 +43,7 @@ export function OtpScreen({ route, navigation }: Props) {
   const [verifying, setVerifying] = useState(false);
   const [resending, setResending] = useState(false);
   const [boxesFocused, setBoxesFocused] = useState(false);
+  const [bannerFocused, setBannerFocused] = useState(false);
   const [editFocused, setEditFocused] = useState(false);
   const [resendFocused, setResendFocused] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(RESEND_SECONDS);
@@ -72,6 +73,16 @@ export function OtpScreen({ route, navigation }: Props) {
         setCodeError('This code has expired. Request a new one below.');
         // The resend countdown runs from screen mount, not from code issue —
         // an expired code must unlock resend immediately, not after the wait.
+        // The dead digits are cleared too, so retrying them cannot loop to
+        // the same error.
+        setCode('');
+        setSecondsLeft(0);
+      } else if (err instanceof ApiError && err.message === 'invalid or expired code') {
+        // No live record: the code was already used up (5 wrong guesses
+        // burn it) or the server restarted. Inline, not a toast — and
+        // resend is unlocked, since the current code is dead either way.
+        setCodeError('This code is no longer valid. Request a new one below.');
+        setCode('');
         setSecondsLeft(0);
       } else if (err instanceof ApiError && err.message === 'invalid code') {
         setCodeError('That code doesn’t match. Check the digits and try again.');
@@ -211,11 +222,19 @@ export function OtpScreen({ route, navigation }: Props) {
             <Entrance delay={100}>
               <Pressable
                 onPress={handleUseCode}
+                onFocus={() => setBannerFocused(true)}
+                onBlur={() => setBannerFocused(false)}
                 accessibilityRole="button"
                 accessibilityLabel={`Your demo code is ${demoCode.split('').join(' ')}. Tap to fill it in.`}
                 style={[
                   styles.demoBanner,
                   { backgroundColor: `${colors.tint}18`, borderColor: `${colors.tint}55` },
+                  bannerFocused && {
+                    outlineStyle: 'solid',
+                    outlineWidth: 2,
+                    outlineColor: colors.tintText,
+                    outlineOffset: 2,
+                  },
                 ]}
               >
                 <View style={styles.demoBannerTop}>
@@ -238,6 +257,7 @@ export function OtpScreen({ route, navigation }: Props) {
           <Entrance delay={200}>
             <GlassFieldCard>
               <Pressable
+                accessibilityRole="button"
                 accessibilityLabel="Code entry"
                 onPress={() => inputRef.current?.focus()}
                 style={[
@@ -316,6 +336,10 @@ export function OtpScreen({ route, navigation }: Props) {
                 title="Verify and sign in"
                 onPress={() => handleVerify(code)}
                 loading={verifying}
+                // Disabled until 6 digits: tapping with a short code only
+                // ever produced the inline error. Auto-submit on the 6th
+                // digit is unaffected.
+                disabled={code.length !== 6}
                 accessibilityLabel="Verify code and sign in"
               />
             </View>
@@ -329,7 +353,13 @@ export function OtpScreen({ route, navigation }: Props) {
             ) : null}
             <View style={styles.resendWrap}>
               {resending ? (
-                <Text style={[typography.subhead, { color: colors.secondaryLabel }]}>
+                // Live region on this transient element only — the
+                // countdown text below is deliberately NOT a live region,
+                // or it would announce every second.
+                <Text
+                  accessibilityLiveRegion="polite"
+                  style={[typography.subhead, { color: colors.secondaryLabel }]}
+                >
                   Sending…
                 </Text>
               ) : secondsLeft > 0 ? (

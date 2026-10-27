@@ -74,10 +74,14 @@ export function CountryCodePicker({ code, onChange }: CountryCodePickerProps) {
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
         <View style={styles.backdrop}>
           {/* Dismiss layer sits BEHIND the sheet (sibling, not parent), so
-              taps inside the sheet never bubble into a close. */}
+              taps inside the sheet never bubble into a close. It is not
+              focusable: keyboard users tab straight to the list and
+              Cancel instead of landing on an invisible full-screen
+              control first. */}
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Close country code list"
+            focusable={false}
             onPress={() => setOpen(false)}
             style={StyleSheet.absoluteFill}
           />

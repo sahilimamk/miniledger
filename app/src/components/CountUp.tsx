@@ -1,24 +1,42 @@
 import { useEffect, useRef, useState } from 'react';
 import { Text, type StyleProp, type TextStyle } from 'react-native';
 
+import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion';
+
 interface CountUpProps {
   /** Target value; animates from the previous value (0 on first mount). */
   value: number;
   format: (n: number) => string;
   style?: StyleProp<TextStyle>;
   duration?: number;
+  numberOfLines?: number;
+  adjustsFontSizeToFit?: boolean;
 }
 
 /**
  * Money figure that counts up with an ease-out cubic (Revolut-style hero
  * numbers). requestAnimationFrame-driven, so it behaves identically on web
- * and native; ~60fps for one number is free.
+ * and native; ~60fps for one number is free. With reduced motion preferred,
+ * the final value renders immediately — no animation.
  */
-export function CountUp({ value, format, style, duration = 650 }: CountUpProps) {
+export function CountUp({
+  value,
+  format,
+  style,
+  duration = 650,
+  numberOfLines,
+  adjustsFontSizeToFit,
+}: CountUpProps) {
   const [display, setDisplay] = useState(0);
   const fromRef = useRef(0);
+  const reducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
+    if (reducedMotion) {
+      setDisplay(value);
+      fromRef.current = value;
+      return;
+    }
     const from = fromRef.current;
     if (from === value) {
       setDisplay(value);
@@ -41,10 +59,16 @@ export function CountUp({ value, format, style, duration = 650 }: CountUpProps) 
       cancelAnimationFrame(raf);
       fromRef.current = value;
     };
-  }, [value, duration]);
+  }, [value, duration, reducedMotion]);
 
   return (
-    <Text style={style} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+    <Text
+      style={style}
+      numberOfLines={numberOfLines}
+      adjustsFontSizeToFit={adjustsFontSizeToFit}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    >
       {format(display)}
     </Text>
   );

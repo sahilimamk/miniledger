@@ -6,8 +6,11 @@ Track money you've lent to friends — who owes you, how much, and what's overdu
 - **App:** Expo + React Native (`app/`) — one codebase that runs as a mobile app
   and as a web app. Phone: single-column iOS-style grouped design. Desktop
   (≥1024px): a real dashboard layout — KPI stat strip, loans list beside a
-  summary rail, toolbar Add Loan button, centered sign-in. Light and dark mode.
-- **Login:** phone number + mock OTP (the code is printed in the server log — no SMS in this build)
+  summary rail, toolbar Add Loan button, centered sign-in. Light mode.
+- **Login:** phone number + mock OTP. In demo mode (`DEMO_AUTH=true` on the
+  server) the code is shown on screen, labelled DEMO; otherwise the server
+  never returns or logs a code, and a real SMS channel is required — no SMS
+  in this build.
 - **See `FILEMAP.md`** for what every file does, and `CONTRACT.md` for the API contract.
 
 ## Prerequisites
@@ -29,11 +32,9 @@ npm install
 npm run dev               # runs migrations, listens on http://localhost:4000
 ```
 
-Log in from the app, then read the OTP from the server console — it looks like:
-
-```
-[OTP] phone=+919876543210 code=123456
-```
+Log in from the app. In demo mode the code is shown on the sign-in screen,
+labelled DEMO; otherwise it is never returned — a real SMS channel is
+required to sign in.
 
 Other server commands:
 

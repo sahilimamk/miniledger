@@ -10,6 +10,7 @@ import Animated, {
 import type { Loan } from '../api/types';
 import { AppIcon } from './AppIcon';
 import { Avatar } from './Avatar';
+import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion';
 import { sectionInset, spacing } from '../theme/spacing';
 import { font, typography } from '../theme/typography';
 import { cardShadow } from '../theme/elevation';
@@ -34,6 +35,7 @@ interface LoanRowProps {
 export function LoanRow({ loan, onPress, index = 0, card = false }: LoanRowProps) {
   const { colors, isDark } = useTheme();
   const [focused, setFocused] = useState(false);
+  const reducedMotion = usePrefersReducedMotion();
   const scale = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
@@ -54,9 +56,15 @@ export function LoanRow({ loan, onPress, index = 0, card = false }: LoanRowProps
 
   return (
     <Animated.View
-      entering={FadeInDown.delay(Math.min(index, 8) * 50)
-        .springify()
-        .damping(19)}
+      // With reduced motion preferred, rows render immediately — the
+      // cascade-in is skipped (same pattern as Entrance).
+      entering={
+        reducedMotion
+          ? undefined
+          : FadeInDown.delay(Math.min(index, 8) * 50)
+              .springify()
+              .damping(19)
+      }
       style={[
         animatedStyle,
         card && {
