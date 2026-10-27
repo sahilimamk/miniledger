@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeInUp, FadeOutUp } from 'react-native-reanimated';
+import Animated, { FadeInUp, FadeOutUp, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppIcon } from './AppIcon';
@@ -82,6 +82,7 @@ function ToastHost({
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const [focused, setFocused] = useState(false);
+  const reduceMotion = useReducedMotion();
 
   if (!toast) return null;
   const isError = toast.variant === 'error';
@@ -108,7 +109,7 @@ function ToastHost({
         <Animated.View
           key={toast.id}
           accessibilityLiveRegion="polite"
-          entering={FadeInUp.springify().damping(17)}
+          entering={reduceMotion ? undefined : FadeInUp.springify().damping(17)}
           exiting={FadeOutUp}
           style={[
             styles.pill,

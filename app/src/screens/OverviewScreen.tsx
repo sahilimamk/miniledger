@@ -45,6 +45,7 @@ export function OverviewScreen({ navigation }: Props) {
   const [loans, setLoans] = useState<Loan[] | null>(null);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [viewAllFocused, setViewAllFocused] = useState(false);
 
   const load = useCallback(async () => {
     // Loans and summary load independently: the old Promise.all meant a
@@ -221,7 +222,18 @@ export function OverviewScreen({ navigation }: Props) {
               accessibilityRole="button"
               accessibilityLabel="View all loans"
               onPress={() => navigation.navigate('Loans')}
-              style={({ pressed }) => [styles.viewAll, pressed && styles.pressed]}
+              onFocus={() => setViewAllFocused(true)}
+              onBlur={() => setViewAllFocused(false)}
+              style={({ pressed }) => [
+                styles.viewAll,
+                pressed && styles.pressed,
+                viewAllFocused && {
+                  outlineStyle: 'solid',
+                  outlineWidth: 2,
+                  outlineColor: colors.tintText,
+                  outlineOffset: 2,
+                },
+              ]}
             >
               <Text style={[typography.headline, { color: colors.tintText }]}>
                 View all loans

@@ -38,7 +38,7 @@ export function buildFullPhone(countryCode: string, national: string): string {
   }
   const ccDigits = countryCode.replace(/\D/g, '');
   let digits = trimmed.replace(/\D/g, '').replace(/^0+/, '');
-  if (ccDigits && digits.startsWith(ccDigits) && digits.length - ccDigits.length >= 9) {
+  if (ccDigits && digits.startsWith(ccDigits) && digits.length - ccDigits.length >= 10) {
     digits = digits.slice(ccDigits.length);
   }
   return `${countryCode}${digits}`;

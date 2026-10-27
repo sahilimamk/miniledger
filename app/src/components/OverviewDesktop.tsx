@@ -70,6 +70,7 @@ export function AttentionRow({
   onPress: (loan: Loan) => void;
 }) {
   const { colors, isDark } = useTheme();
+  const [focused, setFocused] = useState(false);
   const days = Math.max(0, -daysUntil(loan.dueDate));
   const late =
     days === 0 ? 'Due today' : days === 1 ? '1 day overdue' : `${days} days overdue`;
@@ -78,6 +79,8 @@ export function AttentionRow({
       accessibilityRole="button"
       accessibilityLabel={`${loan.friendName}, ${formatINR(loan.amount)}, ${late}`}
       onPress={() => onPress(loan)}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
       style={({ pressed }) => [
         styles.attentionRow,
         cardShadow(isDark),
@@ -86,6 +89,12 @@ export function AttentionRow({
           borderColor: colors.separator,
         },
         pressed && styles.pressed,
+        focused && {
+          outlineStyle: 'solid',
+          outlineWidth: 2,
+          outlineColor: colors.tintText,
+          outlineOffset: 2,
+        },
       ]}
     >
       <View style={styles.attentionMain}>
@@ -126,6 +135,7 @@ export function OverviewDesktop({
   const [addFocused, setAddFocused] = useState(false);
   const [firstFocused, setFirstFocused] = useState(false);
   const [viewAllFocused, setViewAllFocused] = useState(false);
+  const [nextDueFocused, setNextDueFocused] = useState(false);
   const overdueLoans = loans.filter((loan) => loan.isOverdue);
   const recentLoans = loans.slice(0, 4);
   const nextDue =
@@ -265,7 +275,17 @@ export function OverviewDesktop({
                   accessibilityRole="button"
                   accessibilityLabel={`${nextDue.friendName}, ${formatINR(nextDue.amount)}, due ${formatDate(nextDue.dueDate)}`}
                   onPress={() => onOpenLoan(nextDue)}
-                  style={({ pressed }) => [pressed && styles.pressed]}
+                  onFocus={() => setNextDueFocused(true)}
+                  onBlur={() => setNextDueFocused(false)}
+                  style={({ pressed }) => [
+                    pressed && styles.pressed,
+                    nextDueFocused && {
+                      outlineStyle: 'solid',
+                      outlineWidth: 2,
+                      outlineColor: colors.tintText,
+                      outlineOffset: 2,
+                    },
+                  ]}
                 >
                   <GroupedCard>
                     <View style={styles.nextDueBody}>
